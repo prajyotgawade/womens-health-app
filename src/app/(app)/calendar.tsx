@@ -69,18 +69,31 @@ export default function CalendarScreen() {
 
   const themeConfig = useMemo(() => {
     return {
-      calendarBackground: theme.backgroundElement,
+      calendarBackground: theme.background,
       textSectionTitleColor: theme.textSecondary,
       selectedDayBackgroundColor: theme.primary,
       selectedDayTextColor: theme.onPrimary,
       todayTextColor: theme.primary,
       dayTextColor: theme.text,
-      textDisabledColor: 'rgba(255,255,255,0.2)',
+      textDisabledColor: 'rgba(150,150,150,0.2)',
       dotColor: theme.primary,
       selectedDotColor: '#ffffff',
       arrowColor: theme.primary,
       monthTextColor: theme.text,
       textMonthFontWeight: 'bold' as const,
+      textDayFontFamily: 'PlusJakartaSans_500Medium',
+      textMonthFontFamily: 'PlusJakartaSans_700Bold',
+      textDayHeaderFontFamily: 'PlusJakartaSans_600SemiBold',
+      'stylesheet.calendar.header': {
+        header: {
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingLeft: 10,
+          paddingRight: 10,
+          marginTop: 6,
+          alignItems: 'center'
+        },
+      }
     };
   }, [theme]);
 
@@ -107,9 +120,21 @@ export default function CalendarScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.two }]}>
-        <ThemedText type="displaySmall" style={{ color: theme.primary, paddingHorizontal: Spacing.four }}>
+        <ThemedText type="displaySmall" style={{ color: theme.primary, paddingHorizontal: Spacing.four, fontWeight: '700' }}>
           Calendar
         </ThemedText>
+        
+        {/* Premium Visual Legend */}
+        <View style={styles.legendContainer}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: theme.error }]} />
+            <ThemedText type="labelMedium" style={{ color: theme.textSecondary }}>Period</ThemedText>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: theme.tertiary }]} />
+            <ThemedText type="labelMedium" style={{ color: theme.textSecondary }}>Ovulation</ThemedText>
+          </View>
+        </View>
       </View>
 
       <CalendarProvider
@@ -159,6 +184,22 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingBottom: Spacing.four,
+  },
+  legendContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.four,
+    marginTop: Spacing.two,
+    gap: Spacing.four,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   calendar: {
     borderBottomWidth: 1,

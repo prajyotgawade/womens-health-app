@@ -56,13 +56,13 @@ export function Button({
   // Press animations
   const onPressIn = () => {
     if (!disabled && !loading) {
-      scale.value = withSpring(0.96, { damping: 15 });
+      scale.value = withSpring(0.96, { damping: 12, stiffness: 300 });
     }
   };
 
   const onPressOut = () => {
     if (!disabled && !loading) {
-      scale.value = withSpring(1, { damping: 15 });
+      scale.value = withSpring(1, { damping: 12, stiffness: 300 });
     }
   };
 

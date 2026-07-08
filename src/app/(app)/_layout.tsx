@@ -24,8 +24,8 @@ export default function AppLayout() {
           elevation: 0,
         },
         tabBarLabelStyle: {
+          fontFamily: 'PlusJakartaSans_600SemiBold',
           fontSize: 11,
-          fontWeight: '600',
           marginTop: 4,
         },
       }}>
@@ -69,11 +69,17 @@ export default function AppLayout() {
   );
 }
 
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
+
 function TabIcon({ name, color, focused, theme }: { name: any, color: string, focused: boolean, theme: any }) {
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: withSpring(focused ? 1.15 : 1, { damping: 14, stiffness: 250 }) }],
+  }), [focused]);
+
   return (
-    <View style={[styles.iconContainer, focused && { backgroundColor: theme.primaryContainer }]}>
+    <Animated.View style={[styles.iconContainer, focused && { backgroundColor: theme.primaryContainer }, animatedStyle]}>
       <Ionicons name={name} size={24} color={color} />
-    </View>
+    </Animated.View>
   );
 }
 

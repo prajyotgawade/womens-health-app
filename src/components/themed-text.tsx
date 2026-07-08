@@ -8,17 +8,34 @@ export type ThemedTextProps = TextProps & {
   themeColor?: ThemeColor;
 };
 
+const getFontFamily = (weight?: string | number) => {
+  switch (String(weight)) {
+    case '700':
+    case 'bold':
+      return 'PlusJakartaSans_700Bold';
+    case '600':
+      return 'PlusJakartaSans_600SemiBold';
+    case '500':
+      return 'PlusJakartaSans_500Medium';
+    case '400':
+    case 'normal':
+    default:
+      return 'PlusJakartaSans_400Regular';
+  }
+};
+
 export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
   const theme = useTheme();
 
   // Determine baseline style based on type
   const isM3Type = type in Typography;
   const m3Style = isM3Type ? Typography[type as TypographyStyle] : null;
+  const resolvedWeight = m3Style?.fontWeight || (StyleSheet.flatten(style) as any)?.fontWeight;
 
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'], fontFamily: Fonts.sans },
+        { color: theme[themeColor ?? 'text'], fontFamily: getFontFamily(resolvedWeight) },
         m3Style,
         !isM3Type && type === 'default' && styles.default,
         !isM3Type && type === 'title' && styles.title,

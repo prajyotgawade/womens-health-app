@@ -43,13 +43,13 @@ export function Card({
 
   const onPressIn = () => {
     if (isPressable) {
-      scale.value = withSpring(0.98, { damping: 15 });
+      scale.value = withSpring(0.98, { damping: 12, stiffness: 300 });
     }
   };
 
   const onPressOut = () => {
     if (isPressable) {
-      scale.value = withSpring(1, { damping: 15 });
+      scale.value = withSpring(1, { damping: 12, stiffness: 300 });
     }
   };
 

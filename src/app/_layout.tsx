@@ -5,7 +5,13 @@ import * as SplashScreen from 'expo-splash-screen';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold } from '@expo-google-fonts/outfit';
+import { 
+  useFonts, 
+  PlusJakartaSans_400Regular, 
+  PlusJakartaSans_500Medium, 
+  PlusJakartaSans_600SemiBold, 
+  PlusJakartaSans_700Bold 
+} from '@expo-google-fonts/plus-jakarta-sans';
 
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -36,10 +42,10 @@ function RootLayoutNav() {
   const router = useRouter();
 
   const [fontsLoaded, fontError] = useFonts({
-    Outfit_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-    Outfit_700Bold,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
   });
 
   useEffect(() => {

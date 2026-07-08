@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { format, addDays, subDays } from 'date-fns';
 import { registerForPushNotificationsAsync } from '@/utils/notifications';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -91,31 +92,36 @@ export default function HomeScreen() {
 
           {/* Hero Widget: Cycle Status */}
           <Animated.View entering={FadeInDown.duration(600).delay(200).springify()} style={styles.heroContainer}>
-            <GlassView intensity="high" borderRadius={32} style={styles.heroCard}>
+            <LinearGradient 
+              colors={[theme.primary, theme.secondary]} 
+              start={{ x: 0, y: 0 }} 
+              end={{ x: 1, y: 1 }} 
+              style={[styles.heroCard, { borderRadius: 32 }]}
+            >
               <View style={styles.heroInner}>
                 <View style={styles.heroLeft}>
-                  <ThemedText type="displayLarge" style={{ color: theme.primary, fontWeight: '700', fontSize: 64, lineHeight: 68 }}>
+                  <ThemedText type="displayLarge" style={{ color: theme.onPrimary, fontWeight: '700', fontSize: 64, lineHeight: 68 }}>
                     {NEXT_PERIOD_DAYS}
                   </ThemedText>
-                  <ThemedText type="titleMedium" style={{ color: theme.textSecondary }}>
+                  <ThemedText type="titleMedium" style={{ color: theme.onPrimary, opacity: 0.9 }}>
                     Days until period
                   </ThemedText>
                 </View>
                 
                 <View style={styles.heroRight}>
-                  <View style={[styles.cycleBadge, { backgroundColor: theme.primaryContainer }]}>
-                    <ThemedText type="labelMedium" style={{ color: theme.primary }}>
+                  <View style={[styles.cycleBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                    <ThemedText type="labelMedium" style={{ color: theme.onPrimary }}>
                       Day {CYCLE_DAY}
                     </ThemedText>
                   </View>
-                  <View style={[styles.cycleBadge, { backgroundColor: theme.secondaryContainer, marginTop: Spacing.two }]}>
-                    <ThemedText type="labelMedium" style={{ color: theme.secondary }}>
+                  <View style={[styles.cycleBadge, { backgroundColor: 'rgba(255,255,255,0.2)', marginTop: Spacing.two }]}>
+                    <ThemedText type="labelMedium" style={{ color: theme.onPrimary }}>
                       Follicular
                     </ThemedText>
                   </View>
                 </View>
               </View>
-            </GlassView>
+            </LinearGradient>
           </Animated.View>
 
           {/* Vitals Row */}

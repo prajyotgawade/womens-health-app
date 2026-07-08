@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Platform, Dimensions } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +26,7 @@ const OVULATION_DAY = 'Tomorrow';
 const CALENDAR_DAYS = Array.from({ length: 7 }).map((_, i) => addDays(subDays(TODAY, 3), i));
 
 export default function HomeScreen() {
+  const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -177,7 +179,10 @@ export default function HomeScreen() {
         entering={FadeIn.duration(800).delay(800)} 
         style={[styles.fabContainer, { bottom: Spacing.six }]}
       >
-        <Pressable style={[styles.fab, { backgroundColor: theme.primary }]}>
+        <Pressable 
+          style={[styles.fab, { backgroundColor: theme.primary }]}
+          onPress={() => router.push('/log')}
+        >
           <Ionicons name="add" size={32} color={theme.onPrimary} />
         </Pressable>
       </Animated.View>

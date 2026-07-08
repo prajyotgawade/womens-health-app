@@ -1,26 +1,24 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import '@/global.css';
 
 import { Platform } from 'react-native';
+import { LightColors, DarkColors } from '../theme/colors';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    ...LightColors,
+    text: LightColors.onBackground,
+    background: LightColors.background,
+    backgroundElement: LightColors.surfaceVariant,
+    backgroundSelected: LightColors.primaryContainer,
+    textSecondary: LightColors.onSurfaceVariant,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    ...DarkColors,
+    text: DarkColors.onBackground,
+    background: DarkColors.background,
+    backgroundElement: DarkColors.surfaceVariant,
+    backgroundSelected: DarkColors.primaryContainer,
+    textSecondary: DarkColors.onSurfaceVariant,
   },
 } as const;
 
@@ -28,13 +26,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -52,6 +46,7 @@ export const Fonts = Platform.select({
 });
 
 export const Spacing = {
+  none: 0,
   half: 2,
   one: 4,
   two: 8,
@@ -60,6 +55,133 @@ export const Spacing = {
   five: 32,
   six: 64,
 } as const;
+
+export const Typography = {
+  displayLarge: {
+    fontSize: 57,
+    lineHeight: 64,
+    fontWeight: '400' as const,
+  },
+  displayMedium: {
+    fontSize: 45,
+    lineHeight: 52,
+    fontWeight: '400' as const,
+  },
+  displaySmall: {
+    fontSize: 36,
+    lineHeight: 44,
+    fontWeight: '400' as const,
+  },
+  headlineLarge: {
+    fontSize: 32,
+    lineHeight: 40,
+    fontWeight: '400' as const,
+  },
+  headlineMedium: {
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '400' as const,
+  },
+  headlineSmall: {
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '400' as const,
+  },
+  titleLarge: {
+    fontSize: 22,
+    lineHeight: 28,
+    fontWeight: '400' as const,
+  },
+  titleMedium: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '500' as const,
+  },
+  titleSmall: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500' as const,
+  },
+  bodyLarge: {
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '400' as const,
+  },
+  bodyMedium: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '400' as const,
+  },
+  bodySmall: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '400' as const,
+  },
+  labelLarge: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500' as const,
+  },
+  labelMedium: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '500' as const,
+  },
+  labelSmall: {
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '500' as const,
+  },
+} as const;
+
+export type TypographyStyle = keyof typeof Typography;
+
+export const Elevation = {
+  level0: {
+    shadowColor: 'transparent',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  level1: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.18,
+    shadowRadius: 1.0,
+    elevation: 1,
+  },
+  level2: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  level3: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 6,
+  },
+  level4: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.30,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  level5: {
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.37,
+    shadowRadius: 7.49,
+    elevation: 12,
+  },
+} as const;
+
+export type ElevationLevel = keyof typeof Elevation;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;

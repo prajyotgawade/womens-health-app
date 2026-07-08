@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { format, addDays, subDays } from 'date-fns';
 import { registerForPushNotificationsAsync } from '@/utils/notifications';
 
@@ -54,8 +55,15 @@ export default function HomeScreen() {
             </View>
             
             <Pressable 
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Open AI Health Assistant"
+              accessibilityHint="Navigates to the conversational AI chat interface"
               style={[styles.aiShortcut, { backgroundColor: theme.primaryContainer }]}
-              onPress={() => router.push('/ai' as any)}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/ai' as any);
+              }}
             >
               <Ionicons name="sparkles" size={20} color={theme.primary} />
             </Pressable>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,66 +11,53 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { INSIGHTS } from './index';
 
-const { width } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 export default function InsightDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
-  const insight = INSIGHTS.find(i => i.id === id);
+  const article = INSIGHTS.find(i => i.id === id);
 
-  if (!insight) {
-    return (
-      <ThemedView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ThemedText>Article not found.</ThemedText>
-      </ThemedView>
-    );
-  }
+  if (!article) return <View />;
 
   const imageProps: any = {
-    source: { uri: insight.image },
+    source: { uri: article.image },
     style: styles.heroImage,
-    sharedTransitionTag: `insight-img-${insight.id}`
+    sharedTransitionTag: `insight-img-${article.id}`
   };
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView bounces={false} showsVerticalScrollIndicator={false}>
-        <View style={styles.imageContainer}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: Spacing.six }}>
+        <View style={styles.heroContainer}>
           <Animated.Image {...imageProps} />
-          
-          <Pressable 
-            style={[styles.backButton, { top: insets.top + Spacing.two }]}
-            onPress={() => router.back()}
-          >
-            <View style={[styles.backButtonInner, { backgroundColor: theme.background }]}>
-              <Ionicons name="arrow-back" size={24} color={theme.text} />
-            </View>
-          </Pressable>
+          <Animated.View entering={FadeInDown.duration(400).delay(200)} style={[styles.backBtn, { top: insets.top + Spacing.two }]}>
+            <Pressable onPress={() => router.back()} style={[styles.backBtnInner, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </Pressable>
+          </Animated.View>
         </View>
 
-        <Animated.View 
-          entering={FadeInDown.duration(600).delay(300).springify()}
-          style={styles.content}
-        >
-          <ThemedText type="displaySmall" style={{ color: theme.text, marginBottom: Spacing.three }}>
-            {insight.title}
+        <Animated.View entering={FadeInDown.duration(600).delay(100).springify()} style={styles.contentContainer}>
+          <View style={[styles.badge, { backgroundColor: theme.primaryContainer }]}>
+            <ThemedText type="labelSmall" style={{ color: theme.primary, textTransform: 'uppercase', letterSpacing: 1 }}>
+              {article.category}
+            </ThemedText>
+          </View>
+          
+          <ThemedText type="displaySmall" style={{ color: theme.text, marginTop: Spacing.three, marginBottom: Spacing.two }}>
+            {article.title}
           </ThemedText>
-          <ThemedText type="titleMedium" style={{ color: theme.primary, marginBottom: Spacing.five }}>
-            {insight.summary}
+          
+          <ThemedText type="bodyMedium" style={{ color: theme.textSecondary, marginBottom: Spacing.six, fontSize: 18, lineHeight: 26, fontStyle: 'italic' }}>
+            {article.summary}
           </ThemedText>
 
-          {/* Dummy Content */}
-          <ThemedText type="bodyLarge" style={{ color: theme.textSecondary, lineHeight: 28, marginBottom: Spacing.four }}>
-            Hormonal balance plays a critical role in your overall well-being. By tracking your cycle phases, you can better understand your body's unique rhythms and optimize your lifestyle accordingly.
-          </ThemedText>
-          <ThemedText type="bodyLarge" style={{ color: theme.textSecondary, lineHeight: 28, marginBottom: Spacing.four }}>
-            The follicular phase is characterized by rising estrogen levels, which often lead to increased energy and creativity. This is an excellent time for brainstorming and starting new projects.
-          </ThemedText>
-          <ThemedText type="bodyLarge" style={{ color: theme.textSecondary, lineHeight: 28 }}>
-            Conversely, the luteal phase, dominated by progesterone, is a natural time for inward reflection, nesting, and self-care. Prioritizing rest during this time can significantly reduce premenstrual symptoms.
+          <ThemedText type="bodyMedium" style={{ color: theme.text, fontSize: 16, lineHeight: 26 }}>
+            {article.content}
           </ThemedText>
         </Animated.View>
       </ScrollView>
@@ -82,34 +69,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  imageContainer: {
-    width: width,
-    height: width * 0.9,
+  heroContainer: {
+    width: '100%',
+    height: height * 0.45,
     position: 'relative',
   },
   heroImage: {
     width: '100%',
     height: '100%',
   },
-  backButton: {
+  backBtn: {
     position: 'absolute',
     left: Spacing.four,
     zIndex: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
-  backButtonInner: {
+  backBtnInner: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  content: {
-    padding: Spacing.five,
-    paddingBottom: Spacing.six,
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: 12,
+  },
+  contentContainer: {
+    padding: Spacing.six,
   },
 });

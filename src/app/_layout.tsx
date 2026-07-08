@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { View, Text, Pressable } from 'react-native';
+import { Stack, useRouter, useSegments, ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useColorScheme } from 'react-native';
@@ -8,6 +9,23 @@ import { useFonts, Outfit_400Regular, Outfit_500Medium, Outfit_600SemiBold, Outf
 
 import { AuthProvider, useAuth } from '@/context/auth-context';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#000', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold', marginBottom: 12 }}>Connection Lost</Text>
+      <Text style={{ color: '#a1a1aa', textAlign: 'center', marginBottom: 24, fontSize: 16 }}>
+        {error.message || "We encountered an unexpected error. Please check your connection and try again."}
+      </Text>
+      <Pressable 
+        onPress={retry} 
+        style={{ paddingHorizontal: 24, paddingVertical: 14, backgroundColor: '#d81b60', borderRadius: 30 }}
+      >
+        <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Try Again</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();

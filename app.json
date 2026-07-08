@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "womens-health-app",
+    "name": "Women's Health",
     "slug": "womens-health-app",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,12 +11,19 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
+      "package": "com.gawad.womenshealth",
+      "versionCode": 1,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFC1CC",
+        "foregroundImage": "./assets/images/icon.png"
       },
+      "permissions": [
+        "VIBRATE",
+        "NOTIFICATIONS",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "CAMERA"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -28,9 +35,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#FFC1CC",
+          "image": "./assets/images/splash.png",
+          "imageWidth": 200
         }
       ]
     ],

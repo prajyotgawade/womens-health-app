@@ -47,13 +47,18 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@testing-library/react-native": "^14.0.1",
+    "@types/jest": "^30.0.0",
     "@types/react": "~19.1.10",
     "eslint": "^9.39.4",
     "eslint-config-expo": "~10.0.0",
     "eslint-config-universe": "^16.0.0",
     "husky": "^9.1.7",
+    "jest": "^30.4.2",
+    "jest-expo": "^57.0.1",
     "lint-staged": "^17.0.8",
     "prettier": "^3.9.4",
+    "react-test-renderer": "^19.2.7",
     "typescript": "~5.9.2"
   },
   "scripts": {
@@ -62,6 +67,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "test": "jest",
     "lint": "expo lint"
   },
   "private": true

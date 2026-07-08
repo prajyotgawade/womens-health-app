@@ -64,7 +64,29 @@ export default function LoginScreen() {
       if (data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === 'success' && result.url) {
-           // Session handled automatically by Supabase Auth Context and _layout.tsx
+          // Manually extract tokens from the URL fragment (e.g., #access_token=123&refresh_token=456)
+          const url = result.url;
+          const hashMatch = url.match(/#(.+)/);
+          
+          if (hashMatch) {
+            const hash = hashMatch[1];
+            const params = hash.split('&').reduce((acc: any, item: string) => {
+              const [key, value] = item.split('=');
+              acc[key] = decodeURIComponent(value);
+              return acc;
+            }, {});
+            
+            if (params.access_token && params.refresh_token) {
+              const { error: sessionError } = await supabase.auth.setSession({
+                access_token: params.access_token,
+                refresh_token: params.refresh_token,
+              });
+              
+              if (sessionError) {
+                throw sessionError;
+              }
+            }
+          }
         }
       }
     } catch (err: any) {

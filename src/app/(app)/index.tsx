@@ -53,7 +53,10 @@ export default function HomeScreen() {
               </ThemedText>
             </View>
             
-            <Pressable style={[styles.aiShortcut, { backgroundColor: theme.primaryContainer }]}>
+            <Pressable 
+              style={[styles.aiShortcut, { backgroundColor: theme.primaryContainer }]}
+              onPress={() => router.push('/ai' as any)}
+            >
               <Ionicons name="sparkles" size={20} color={theme.primary} />
             </Pressable>
           </Animated.View>

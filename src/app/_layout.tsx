@@ -54,6 +54,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="log" options={{ presentation: 'modal', headerShown: false }} />
         <Stack.Screen name="reports" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="ai" options={{ presentation: 'modal', headerShown: false }} />
       </Stack>
     </>
   );

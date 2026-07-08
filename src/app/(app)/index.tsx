@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays, subDays } from 'date-fns';
+import { registerForPushNotificationsAsync } from '@/utils/notifications';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -29,6 +30,10 @@ export default function HomeScreen() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+
+  React.useEffect(() => {
+    registerForPushNotificationsAsync().catch(console.error);
+  }, []);
 
   return (
     <ThemedView style={styles.container}>
@@ -156,6 +161,28 @@ export default function HomeScreen() {
                 <ThemedText type="labelSmall" style={{ marginTop: 8, color: theme.textSecondary }}>Sleep</ThemedText>
               </Pressable>
             </View>
+          </Animated.View>
+
+          {/* Medication Module Shortcut */}
+          <Animated.View entering={FadeInDown.duration(600).delay(450).springify()} style={styles.medicationSection}>
+            <View style={styles.sectionHeader}>
+              <ThemedText type="titleMedium" style={{ color: theme.text }}>Medications</ThemedText>
+              <Pressable onPress={() => router.push('/medicine' as any)}>
+                <ThemedText type="labelMedium" style={{ color: theme.primary }}>See All</ThemedText>
+              </Pressable>
+            </View>
+            <Pressable onPress={() => router.push('/medicine' as any)}>
+              <Card variant="elevated" style={[styles.medicationCard, { backgroundColor: theme.primaryContainer }]}>
+                <View style={styles.medCardIcon}>
+                  <Ionicons name="medical" size={24} color={theme.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <ThemedText type="titleMedium" style={{ color: theme.primary }}>Track your pills</ThemedText>
+                  <ThemedText type="labelMedium" style={{ color: theme.primary, opacity: 0.8 }}>0/2 taken today</ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={theme.primary} />
+              </Card>
+            </Pressable>
           </Animated.View>
 
           {/* Daily Tip */}
@@ -290,6 +317,31 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+  },
+  medicationSection: {
+    marginBottom: Spacing.six,
+  },
+  medicationCard: {
+    marginHorizontal: Spacing.four,
+    padding: Spacing.four,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  medCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.four,
   },
   tipContainer: {
     paddingHorizontal: Spacing.four,

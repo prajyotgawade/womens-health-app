@@ -65,12 +65,6 @@ export default function AppLayout() {
           ),
         }}
       />
-      
-      {/* Hide the old explore tab if it still exists from the template */}
-      <Tabs.Screen
-        name="explore"
-        options={{ href: null }}
-      />
     </Tabs>
   );
 }

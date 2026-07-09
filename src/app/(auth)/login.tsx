@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Platform, Dimensions, StatusBar, useColorScheme } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
-import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 
-import { supabase } from '@/lib/supabase';
-import { useTheme } from '@/hooks/use-theme';
-import { Spacing } from '@/constants/theme';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/ui/error-state';
 import { GlassView } from '@/components/ui/glass-view';
+import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { supabase } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -83,10 +83,10 @@ export default function LoginScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLoading(true);
     setError(null);
-    
+
     try {
       const redirectUrl = Linking.createURL('/(auth)/login');
-      
+
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -101,7 +101,7 @@ export default function LoginScreen() {
         if (result.type === 'success' && result.url) {
           const url = result.url;
           const hashMatch = url.match(/#(.+)/);
-          
+
           if (hashMatch) {
             const hash = hashMatch[1];
             const params = hash.split('&').reduce((acc: any, item: string) => {
@@ -109,13 +109,13 @@ export default function LoginScreen() {
               acc[key] = decodeURIComponent(value);
               return acc;
             }, {});
-            
+
             if (params.access_token && params.refresh_token) {
               const { error: sessionError } = await supabase.auth.setSession({
                 access_token: params.access_token,
                 refresh_token: params.refresh_token,
               });
-              
+
               if (sessionError) {
                 throw sessionError;
               }
@@ -135,10 +135,10 @@ export default function LoginScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
-      
+
       {/* Background Gradients */}
-      <LinearGradient 
-        colors={isDark ? ['#2D1520', '#181213', '#110D0E'] : ['#FFF2F5', '#F5E6EC', '#FCF8F9']} 
+      <LinearGradient
+        colors={isDark ? ['#2D1520', '#181213', '#110D0E'] : ['#FFF2F5', '#F5E6EC', '#FCF8F9']}
         style={StyleSheet.absoluteFillObject}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -149,7 +149,7 @@ export default function LoginScreen() {
       <Animated.View style={[styles.glowBlob2, floatStyle2, { backgroundColor: theme.tertiaryContainer, opacity: isDark ? 0.12 : 0.3 }]} />
 
       <View style={styles.contentWrap}>
-        <Animated.View 
+        <Animated.View
           entering={FadeInUp.duration(1000).springify()}
           style={styles.logoContainer}
         >
@@ -164,7 +164,7 @@ export default function LoginScreen() {
           </ThemedText>
         </Animated.View>
 
-        <Animated.View 
+        <Animated.View
           entering={FadeInDown.duration(1000).delay(200).springify()}
           style={styles.cardContainer}
         >
@@ -172,25 +172,25 @@ export default function LoginScreen() {
             <ThemedText type="headlineSmall" style={[styles.welcomeTitle, { color: theme.text }]}>
               Begin Your Journey
             </ThemedText>
-            
+
             <ThemedText type="bodyMedium" style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>
               Track cycles, analyze symptoms, and gain AI-powered health insights tailored specifically to you.
             </ThemedText>
 
             {error && (
               <Animated.View entering={FadeInDown.duration(400)} style={styles.errorWrap}>
-                <ErrorState 
-                  title="Sign In Failed" 
-                  message={error} 
-                  onRetry={() => setError(null)} 
+                <ErrorState
+                  title="Sign In Failed"
+                  message={error}
+                  onRetry={() => setError(null)}
                 />
               </Animated.View>
             )}
 
-            <Button 
-              label="Continue with Google" 
-              variant="filled" 
-              onPress={signInWithGoogle} 
+            <Button
+              label="Continue with Google"
+              variant="filled"
+              onPress={signInWithGoogle}
               icon={<Ionicons name="logo-google" size={20} color={theme.onPrimary} />}
               loading={loading}
               style={[styles.googleBtn, { backgroundColor: theme.primary }]}

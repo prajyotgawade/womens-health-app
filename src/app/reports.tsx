@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Platform, Dimensions, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withTiming, Easing, SharedValue } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -20,6 +20,29 @@ import { useAuth } from '@/context/auth-context';
 
 const { width } = Dimensions.get('window');
 const MAX_BAR_HEIGHT = 150;
+
+function BarColumn({ data, progress, theme }: { data: { month: string; length: number }; progress: SharedValue<number>; theme: any }) {
+  const targetHeight = (data.length / 35) * MAX_BAR_HEIGHT;
+  
+  const rStyle = useAnimatedStyle(() => {
+    return {
+      height: progress.value * targetHeight,
+      opacity: progress.value,
+    };
+  });
+
+  return (
+    <View style={styles.barColumn}>
+      <ThemedText type="labelSmall" style={{ color: theme.text, marginBottom: 8, fontWeight: '700' }}>
+        {data.length}d
+      </ThemedText>
+      <Animated.View style={[styles.bar, { backgroundColor: theme.primary }, rStyle]} />
+      <ThemedText type="labelSmall" style={{ color: theme.textSecondary, marginTop: 8, fontWeight: '600' }}>
+        {data.month}
+      </ThemedText>
+    </View>
+  );
+}
 
 export default function ReportsScreen() {
   const router = useRouter();
@@ -231,28 +254,9 @@ export default function ReportsScreen() {
                 <View style={[styles.chartGrid, { borderBottomColor: theme.backgroundElement }]} />
                 
                 <View style={styles.barsContainer}>
-                  {cycleData.map((data, i) => {
-                    const targetHeight = (data.length / 35) * MAX_BAR_HEIGHT;
-                    
-                    const rStyle = useAnimatedStyle(() => {
-                      return {
-                        height: progress.value * targetHeight,
-                        opacity: progress.value,
-                      };
-                    });
-
-                    return (
-                      <View key={i} style={styles.barColumn}>
-                        <ThemedText type="labelSmall" style={{ color: theme.text, marginBottom: 8, fontWeight: '700' }}>
-                          {data.length}d
-                        </ThemedText>
-                        <Animated.View style={[styles.bar, { backgroundColor: theme.primary }, rStyle]} />
-                        <ThemedText type="labelSmall" style={{ color: theme.textSecondary, marginTop: 8, fontWeight: '600' }}>
-                          {data.month}
-                        </ThemedText>
-                      </View>
-                    );
-                  })}
+                  {cycleData.map((data, i) => (
+                    <BarColumn key={i} data={data} progress={progress} theme={theme} />
+                  ))}
                 </View>
               </View>
             </Card>

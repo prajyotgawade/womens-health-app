@@ -82,12 +82,12 @@ function RootLayoutNav() {
   return (
     <>
       <AnimatedSplashOverlay />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="log" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="reports" options={{ presentation: 'modal', headerShown: false }} />
-        <Stack.Screen name="ai" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        <Stack.Screen name="(app)" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false, animation: 'fade' }} />
+        <Stack.Screen name="log" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="reports" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="ai" options={{ presentation: 'modal', headerShown: false, animation: 'slide_from_bottom' }} />
       </Stack>
     </>
   );

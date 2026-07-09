@@ -153,10 +153,10 @@ export default function HomeScreen() {
 
   const getPhaseColors = (): readonly [string, string] => {
     switch (currentPhase) {
-      case 'Menstruation': return ['#FF88A5', '#E63946']; // Reds
+      case 'Menstruation': return [theme.calendar.periodBg, theme.calendar.period];
       case 'Follicular': return ['#4FC3F7', '#1E88E5']; // Blues
-      case 'Ovulatory': return ['#81C784', '#388E3C']; // Greens
-      default: return [theme.primary, theme.secondary]; // Luteal (Amethyst Theme default)
+      case 'Ovulatory': return [theme.calendar.ovulationBg, theme.calendar.ovulation];
+      default: return [theme.calendar.predictedBg, theme.calendar.predicted];
     }
   };
 
@@ -275,20 +275,20 @@ export default function HomeScreen() {
 
           {/* Quick Insights Row */}
           <Animated.View entering={FadeInDown.duration(600).delay(400).springify()} style={styles.vitalsRow}>
-            <Card variant="filled" style={[styles.vitalCard, { flex: 1, backgroundColor: theme.primaryContainer }]}>
+            <Card variant="filled" style={[styles.vitalCard, { flex: 1, backgroundColor: theme.calendar.fertileBg }]}>
               <View style={[styles.vitalIconWrap, { backgroundColor: 'rgba(255,255,255,0.4)' }]}>
-                <Ionicons name="flower" size={20} color={theme.primary} />
+                <Ionicons name="flower" size={20} color={theme.calendar.fertile} />
               </View>
-              <ThemedText type="titleMedium" style={{ color: theme.primary, marginTop: Spacing.two, fontWeight: '800' }}>{fertilityStatus}</ThemedText>
-              <ThemedText type="labelSmall" style={{ color: theme.primary, opacity: 0.8 }}>Fertility Window</ThemedText>
+              <ThemedText type="titleMedium" style={{ color: theme.calendar.fertile, marginTop: Spacing.two, fontWeight: '800' }}>{fertilityStatus}</ThemedText>
+              <ThemedText type="labelSmall" style={{ color: theme.calendar.fertile, opacity: 0.8 }}>Fertility Window</ThemedText>
             </Card>
 
-            <Card variant="filled" style={[styles.vitalCard, { flex: 1, backgroundColor: theme.tertiaryContainer }]}>
+            <Card variant="filled" style={[styles.vitalCard, { flex: 1, backgroundColor: theme.calendar.ovulationBg }]}>
               <View style={[styles.vitalIconWrap, { backgroundColor: 'rgba(255,255,255,0.4)' }]}>
-                <Ionicons name="radio-button-on" size={20} color={theme.tertiary} />
+                <Ionicons name="radio-button-on" size={20} color={theme.calendar.ovulation} />
               </View>
-              <ThemedText type="titleMedium" style={{ color: theme.tertiary, marginTop: Spacing.two, fontWeight: '800' }}>{ovulationText}</ThemedText>
-              <ThemedText type="labelSmall" style={{ color: theme.tertiary, opacity: 0.8 }}>Predicted Ovulation</ThemedText>
+              <ThemedText type="titleMedium" style={{ color: theme.calendar.ovulation, marginTop: Spacing.two, fontWeight: '800' }}>{ovulationText}</ThemedText>
+              <ThemedText type="labelSmall" style={{ color: theme.calendar.ovulation, opacity: 0.8 }}>Predicted Ovulation</ThemedText>
             </Card>
           </Animated.View>
 
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   vitalIconWrap: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
   medicationCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.four, borderRadius: 28 },
   tipContainer: { paddingHorizontal: Spacing.five, marginBottom: Spacing.four },
-  tipCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.five, borderWidth: 1 },
-  fabContainer: { position: 'absolute', right: Spacing.five, bottom: BottomTabInset + 10, zIndex: 100 },
+  tipCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.five, borderWidth: 1, borderRadius: 24 },
+  fabContainer: { position: 'absolute', right: Spacing.five, bottom: BottomTabInset + 16, zIndex: 100 },
   fab: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 20, elevation: 12 },
 });

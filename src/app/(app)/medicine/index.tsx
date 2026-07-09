@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Spacing, BottomTabInset } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
@@ -131,23 +131,24 @@ export default function MedicineDashboard() {
             </ScrollView>
           </Animated.View>
 
-          {/* Progress Section */}
-          <Animated.View entering={FadeInDown.duration(400).delay(200).springify()} style={styles.progressSection}>
-            <View style={styles.progressHeader}>
-              <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '700' }}>Today's Compliance</ThemedText>
-              <ThemedText type="labelMedium" style={{ color: theme.primary, fontWeight: '700' }}>{takenCount} of {meds.length} taken</ThemedText>
-            </View>
-            <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement }]}>
-              <View style={[styles.progressBarFill, { backgroundColor: theme.primary, width: `${progress * 100}%` }]} />
-            </View>
-          </Animated.View>
+          {meds.length > 0 ? (
+            <>
+              {/* Progress Section */}
+              <Animated.View entering={FadeInDown.duration(400).delay(200).springify()} style={styles.progressSection}>
+                <View style={styles.progressHeader}>
+                  <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '700' }}>Today's Compliance</ThemedText>
+                  <ThemedText type="labelMedium" style={{ color: theme.primary, fontWeight: '700' }}>{takenCount} of {meds.length} taken</ThemedText>
+                </View>
+                <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement }]}>
+                  <View style={[styles.progressBarFill, { backgroundColor: theme.primary, width: `${progress * 100}%` }]} />
+                </View>
+              </Animated.View>
 
-          {/* Meds List */}
-          <Animated.View entering={FadeInDown.duration(400).delay(300).springify()} style={styles.medsList}>
-             {meds.length > 0 ? (
-               meds.map((med, index) => {
-                 const isTaken = takenMeds.includes(med.id);
-                 return (
+              {/* Meds List */}
+              <Animated.View entering={FadeInDown.duration(400).delay(300).springify()} style={styles.medsList}>
+                {meds.map((med, index) => {
+                  const isTaken = takenMeds.includes(med.id);
+                  return (
                     <Animated.View key={med.id} entering={FadeInDown.duration(400).delay(350 + (index * 50)).springify()}>
                       <Pressable onPress={() => toggleMed(med.id)}>
                         <Card variant={isTaken ? 'filled' : 'elevated'} style={[styles.medCard, isTaken && { backgroundColor: theme.primaryContainer }]}>
@@ -168,17 +169,31 @@ export default function MedicineDashboard() {
                         </Card>
                       </Pressable>
                     </Animated.View>
-                 );
-               })
-             ) : (
-               <View style={styles.emptyContainer}>
-                 <Ionicons name="medical-outline" size={48} color={theme.textSecondary} style={{ opacity: 0.5, marginBottom: 8 }} />
-                 <ThemedText type="titleMedium" style={{ color: theme.textSecondary, opacity: 0.8 }}>
-                   No medications tracked.
-                 </ThemedText>
-               </View>
-             )}
-          </Animated.View>
+                  );
+                })}
+              </Animated.View>
+            </>
+          ) : (
+            <Animated.View entering={FadeInDown.duration(400).delay(200).springify()} style={styles.emptyContainer}>
+              <View style={[styles.medIconWrap, { backgroundColor: theme.backgroundElement, width: 80, height: 80, borderRadius: 40, marginBottom: Spacing.four }]}>
+                <Ionicons name="medical" size={40} color={theme.textSecondary} style={{ opacity: 0.5 }} />
+              </View>
+              <ThemedText type="titleLarge" style={{ color: theme.text, fontWeight: '800', marginBottom: Spacing.two }}>
+                No Medications
+              </ThemedText>
+              <ThemedText type="bodyMedium" style={{ color: theme.textSecondary, textAlign: 'center', paddingHorizontal: Spacing.six, marginBottom: Spacing.six }}>
+                Keep track of your vitamins, supplements, and prescriptions in one place.
+              </ThemedText>
+              <Pressable 
+                style={[styles.calendarDay, { backgroundColor: theme.primary, width: 'auto', paddingHorizontal: Spacing.six, height: 50, borderRadius: 25 }]}
+                onPress={() => router.push('/medicine/add')}
+              >
+                <ThemedText type="titleMedium" style={{ color: theme.onPrimary, fontWeight: '700' }}>
+                  Add First Medication
+                </ThemedText>
+              </Pressable>
+            </Animated.View>
+          )}
 
         </ScrollView>
       </SafeAreaView>
@@ -216,7 +231,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.five,
     paddingBottom: Spacing.four,
   },
   backBtn: {
@@ -230,7 +245,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.six,
   },
   calendarScroll: {
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.five,
     gap: Spacing.two,
   },
   calendarDay: {
@@ -241,7 +256,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   progressSection: {
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.five,
     marginBottom: Spacing.six,
   },
   progressHeader: {
@@ -260,7 +275,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   medsList: {
-    paddingHorizontal: Spacing.four,
+    paddingHorizontal: Spacing.five,
     gap: Spacing.four,
   },
   medCard: {
@@ -293,7 +308,8 @@ const styles = StyleSheet.create({
   },
   fabContainer: {
     position: 'absolute',
-    right: Spacing.four,
+    right: Spacing.five,
+    bottom: BottomTabInset + 16,
     zIndex: 100,
   },
   fab: {

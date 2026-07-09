@@ -83,7 +83,7 @@ export default function CalendarScreen() {
 
   const markedDates = useMemo(() => {
     const dates: any = {};
-    dates[todayStr] = { marked: true, dotColor: theme.primary };
+    dates[todayStr] = { marked: true, dotColor: theme.calendar.period };
 
     if (cycles && cycles.length > 0) {
       const preds = generatePredictions(cycles.map(c => ({ startDate: c.start_date, endDate: c.end_date })));
@@ -94,7 +94,7 @@ export default function CalendarScreen() {
         const diff = differenceInDays(end, start) + 1;
         for (let i = 0; i < diff; i++) {
           const dStr = format(addDays(start, i), 'yyyy-MM-dd');
-          dates[dStr] = { startingDay: i === 0, endingDay: i === diff - 1, color: theme.primary, textColor: theme.onPrimary, marked: true, dotColor: 'rgba(255, 255, 255, 0.5)' };
+          dates[dStr] = { startingDay: i === 0, endingDay: i === diff - 1, color: theme.calendar.period, textColor: '#fff', marked: true, dotColor: 'rgba(255, 255, 255, 0.5)' };
         }
       });
 
@@ -102,16 +102,16 @@ export default function CalendarScreen() {
         const pDiff = differenceInDays(preds.nextPeriodEnd, preds.nextPeriodStart) + 1;
         for (let i = 0; i < pDiff; i++) {
           const dStr = format(addDays(preds.nextPeriodStart, i), 'yyyy-MM-dd');
-          dates[dStr] = { ...dates[dStr], startingDay: i === 0, endingDay: i === pDiff - 1, color: theme.primaryContainer, textColor: theme.onPrimaryContainer };
+          dates[dStr] = { ...dates[dStr], startingDay: i === 0, endingDay: i === pDiff - 1, color: theme.calendar.predictedBg, textColor: theme.calendar.predicted };
         }
 
         const oStr = format(preds.ovulationDate, 'yyyy-MM-dd');
-        dates[oStr] = { ...dates[oStr], color: theme.tertiary, textColor: theme.onTertiary, marked: true, dotColor: '#fff' };
+        dates[oStr] = { ...dates[oStr], color: theme.calendar.ovulation, textColor: '#fff', marked: true, dotColor: '#fff' };
 
         const fDiff = differenceInDays(preds.fertilityWindowEnd, preds.fertilityWindowStart) + 1;
         for (let i = 0; i < fDiff; i++) {
           const dStr = format(addDays(preds.fertilityWindowStart, i), 'yyyy-MM-dd');
-          if (!dates[dStr]) dates[dStr] = { color: theme.tertiaryContainer, textColor: theme.onTertiaryContainer };
+          if (!dates[dStr]) dates[dStr] = { color: theme.calendar.fertileBg, textColor: theme.calendar.fertile };
         }
       }
     }
@@ -167,19 +167,19 @@ export default function CalendarScreen() {
         
         <View style={styles.legendContainer}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: theme.primary }]} />
+            <View style={[styles.legendDot, { backgroundColor: theme.calendar.period }]} />
             <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontWeight: '700' }}>Period</ThemedText>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: theme.primaryContainer }]} />
+            <View style={[styles.legendDot, { backgroundColor: theme.calendar.predicted }]} />
             <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontWeight: '700' }}>Predicted</ThemedText>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: theme.tertiary }]} />
+            <View style={[styles.legendDot, { backgroundColor: theme.calendar.ovulation }]} />
             <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontWeight: '700' }}>Ovulation</ThemedText>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: theme.tertiaryContainer }]} />
+            <View style={[styles.legendDot, { backgroundColor: theme.calendar.fertile }]} />
             <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontWeight: '700' }}>Fertile</ThemedText>
           </View>
         </View>

@@ -35,7 +35,7 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'], fontFamily: getFontFamily(resolvedWeight) },
+        { color: theme[themeColor ?? 'text'] as string, fontFamily: getFontFamily(resolvedWeight) },
         m3Style,
         !isM3Type && type === 'default' && styles.default,
         !isM3Type && type === 'title' && styles.title,

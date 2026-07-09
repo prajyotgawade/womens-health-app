@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { Skeleton } from '@/components/ui/skeleton';
 import { askAI } from '@/utils/ai';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
@@ -104,7 +105,7 @@ export default function AIChatScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.closeBtn}>
-            <Ionicons name="chevron-down" size={28} color={theme.text} />
+            <Ionicons name="close" size={28} color={theme.text} />
           </Pressable>
           <View style={styles.headerTitle}>
             <Ionicons name="sparkles" size={18} color={theme.primary} style={{ marginRight: 6 }} />
@@ -155,8 +156,7 @@ export default function AIChatScreen() {
 
             {isTyping && (
               <Animated.View entering={FadeIn.duration(400)} style={[styles.messageBubble, styles.aiBubble, styles.typingBubble, { backgroundColor: theme.backgroundElement }]}>
-                <ActivityIndicator size="small" color={theme.primary} />
-                <ThemedText type="labelMedium" style={{ color: theme.textSecondary, marginLeft: 8 }}>Formulating insight...</ThemedText>
+                <Skeleton width={120} height={16} borderRadius={8} />
               </Animated.View>
             )}
           </ScrollView>
@@ -260,6 +260,7 @@ const styles = StyleSheet.create({
   },
   promptsScroll: {
     paddingHorizontal: Spacing.four,
+    paddingRight: Spacing.six + 40, // Ensure last chip is fully scrollable and not cut off
     gap: Spacing.three,
   },
   promptChip: {

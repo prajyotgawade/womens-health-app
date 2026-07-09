@@ -15,6 +15,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GlassView } from '@/components/ui/glass-view';
+import { Toggle } from '@/components/ui/toggle';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 import { useAppStore } from '@/store/useAppStore';
@@ -321,7 +322,7 @@ export default function ProfileScreen() {
           {/* Header Profile */}
           <Animated.View entering={FadeInDown.duration(400).springify()} style={styles.header}>
             <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primaryContainer }]}>
-              <ThemedText style={{ fontSize: 48 }}>{avatarEmoji}</ThemedText>
+              <Ionicons name="person" size={48} color={theme.primary} />
             </View>
             <ThemedText type="titleLarge" style={{ color: theme.text, marginTop: Spacing.four, fontWeight: '800' }}>
               {fullName}
@@ -387,13 +388,9 @@ export default function ProfileScreen() {
              <ThemedText type="titleMedium" style={{ color: theme.text, marginBottom: Spacing.three, fontWeight: '700' }}>Preferences & Settings</ThemedText>
              <Card variant="elevated" style={styles.settingsCard}>
                {renderSettingRow('sunny', 'Light Theme', 
-                 <Switch 
+                 <Toggle 
                    value={themeMode === 'light'} 
-                   onValueChange={(val) => {
-                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                     setThemeMode(val ? 'light' : 'dark');
-                   }} 
-                   trackColor={{ true: theme.primary }} 
+                   onValueChange={(val) => setThemeMode(val ? 'light' : 'dark')} 
                  />
                )}
                {renderSettingRow('language', 'Language', 

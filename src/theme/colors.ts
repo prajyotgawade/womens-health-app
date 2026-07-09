@@ -33,6 +33,17 @@ export const LightColors = {
   onError: '#FFFFFF',
   errorContainer: '#FFDAD6',
   onErrorContainer: '#410002',
+  
+  calendar: {
+    period: '#D90429', // Deep Crimson
+    periodBg: '#FFD6DA',
+    predicted: '#7209B7', // Rich Amethyst
+    predictedBg: '#EAD1FF',
+    ovulation: '#2A9D8F', // Emerald
+    ovulationBg: '#C6F6EC',
+    fertile: '#F4A261', // Amber
+    fertileBg: '#FFEEDB',
+  }
 };
 
 export const DarkColors = {
@@ -66,4 +77,15 @@ export const DarkColors = {
   onError: '#690005',
   errorContainer: '#93000A',
   onErrorContainer: '#FFDAD6',
+  
+  calendar: {
+    period: '#FF4D6D', // Bright Crimson
+    periodBg: '#590013',
+    predicted: '#B25DFF', // Bright Amethyst
+    predictedBg: '#340066',
+    ovulation: '#40E0D0', // Bright Teal
+    ovulationBg: '#004D40',
+    fertile: '#FFC07F', // Bright Amber
+    fertileBg: '#663300',
+  }
 };

@@ -15,6 +15,7 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 
@@ -204,9 +205,26 @@ export default function ReportsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-      </View>
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.header}>
+            <View style={{ width: 28, height: 28 }} />
+            <Skeleton width={200} height={24} borderRadius={12} />
+            <View style={{ width: 44 }} />
+          </View>
+          <View style={styles.scrollContent}>
+            <Skeleton width="100%" height={160} borderRadius={24} style={{ marginBottom: Spacing.five }} />
+            <Skeleton width={180} height={24} borderRadius={12} style={{ marginBottom: Spacing.four }} />
+            <Skeleton width="100%" height={240} borderRadius={24} style={{ marginBottom: Spacing.five }} />
+            <Skeleton width={200} height={24} borderRadius={12} style={{ marginBottom: Spacing.four }} />
+            <View style={styles.tagRow}>
+               <Skeleton width={100} height={40} borderRadius={20} />
+               <Skeleton width={80} height={40} borderRadius={20} />
+               <Skeleton width={120} height={40} borderRadius={20} />
+            </View>
+          </View>
+        </SafeAreaView>
+      </ThemedView>
     );
   }
 

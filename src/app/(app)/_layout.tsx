@@ -3,7 +3,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { Platform, View, StyleSheet, useColorScheme } from 'react-native';
 import React, { useEffect } from 'react';
 import Animated, { useAnimatedStyle, withSpring, useSharedValue } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/themed-text';
 import { useTheme } from '@/hooks/use-theme';
 import { Spacing } from '@/constants/theme';
 
@@ -11,39 +13,49 @@ export default function AppLayout() {
   const theme = useTheme();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.container}>
       <Tabs
         screenOptions={{
           headerShown: false,
+          safeAreaInsets: { bottom: 0, top: 0, left: 0, right: 0 },
           tabBarActiveTintColor: theme.primary,
           tabBarInactiveTintColor: theme.textSecondary,
-          tabBarShowLabel: false, // Hidden for a clean, premium floating icon-only look
+          tabBarShowLabel: false,
           tabBarStyle: {
             position: 'absolute',
-            bottom: Platform.OS === 'ios' ? 32 : 24,
-            left: 20,
-            right: 20,
-            height: 70,
-            borderRadius: 35,
-            backgroundColor: isDark ? 'rgba(17, 18, 24, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            bottom: Platform.OS === 'ios' ? Math.max(insets.bottom, 16) : 16,
+            left: 16,
+            right: 16,
+            height: 74,
+            borderRadius: 24,
+            backgroundColor: isDark ? 'rgba(22, 24, 34, 0.95)' : 'rgba(255, 255, 255, 0.95)',
             borderTopWidth: 0,
-            elevation: 10,
+            elevation: 12,
             shadowColor: theme.primary,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: isDark ? 0.4 : 0.15,
-            shadowRadius: 20,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.35 : 0.08,
+            shadowRadius: 18,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
             paddingBottom: 0,
-            overflow: 'hidden',
           },
+          tabBarItemStyle: {
+            height: 74,
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 0,
+            margin: 0,
+          }
         }}>
         <Tabs.Screen
           name="index"
           options={{
             title: 'Today',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon name={focused ? 'home' : 'home-outline'} color={focused ? theme.primary : theme.textSecondary} focused={focused} theme={theme} label="Today" />
+              <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} theme={theme} title="Today" />
             ),
           }}
         />
@@ -52,16 +64,16 @@ export default function AppLayout() {
           options={{
             title: 'Calendar',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon name={focused ? 'calendar' : 'calendar-outline'} color={focused ? theme.primary : theme.textSecondary} focused={focused} theme={theme} label="Calendar" />
+              <TabIcon name={focused ? 'calendar' : 'calendar-outline'} focused={focused} theme={theme} title="Calendar" />
             ),
           }}
         />
         <Tabs.Screen
-          name="insights"
+          name="medicine"
           options={{
-            title: 'Insights',
+            title: 'Medications',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon name={focused ? 'bulb' : 'bulb-outline'} color={focused ? theme.primary : theme.textSecondary} focused={focused} theme={theme} label="Insights" />
+              <TabIcon name={focused ? 'medical' : 'medical-outline'} focused={focused} theme={theme} title="Meds" />
             ),
           }}
         />
@@ -70,8 +82,14 @@ export default function AppLayout() {
           options={{
             title: 'Profile',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon name={focused ? 'person' : 'person-outline'} color={focused ? theme.primary : theme.textSecondary} focused={focused} theme={theme} label="Profile" />
+              <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} theme={theme} title="Profile" />
             ),
+          }}
+        />
+        <Tabs.Screen
+          name="insights"
+          options={{
+            href: null,
           }}
         />
       </Tabs>
@@ -79,30 +97,35 @@ export default function AppLayout() {
   );
 }
 
-function TabIcon({ name, color, focused, theme, label }: { name: any, color: string, focused: boolean, theme: any, label: string }) {
-  const scale = useSharedValue(1);
-  const activeDotScale = useSharedValue(0);
+function TabIcon({ name, focused, theme, title }: { name: any, focused: boolean, theme: any, title: string }) {
+  const scale = useSharedValue(focused ? 1.05 : 1);
 
   useEffect(() => {
-    scale.value = withSpring(focused ? 1.12 : 1, { damping: 12, stiffness: 200 });
-    activeDotScale.value = withSpring(focused ? 1 : 0, { damping: 10, stiffness: 150 });
+    scale.value = withSpring(focused ? 1.05 : 1, { damping: 15, stiffness: 200 });
   }, [focused]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
-  const dotStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: activeDotScale.value }],
-    opacity: activeDotScale.value,
-  }));
-
   return (
-    <Animated.View style={[styles.iconContainer, animatedStyle]}>
-      <View style={[styles.iconWrap, focused && { backgroundColor: theme.primaryContainer }]}>
-        <Ionicons name={name} size={22} color={color} />
-      </View>
-      <Animated.View style={[styles.activeDot, { backgroundColor: theme.primary }, dotStyle]} />
+    <Animated.View 
+      style={[
+        styles.tabIconWrapper, 
+        focused && { backgroundColor: theme.primaryContainer },
+        animatedStyle
+      ]}
+    >
+      <Ionicons name={name} size={22} color={focused ? theme.primary : theme.textSecondary} />
+      <ThemedText 
+        type="labelSmall" 
+        style={[
+          styles.tabLabel, 
+          { color: focused ? theme.primary : theme.textSecondary }
+        ]}
+      >
+        {title}
+      </ThemedText>
     </Animated.View>
   );
 }
@@ -111,25 +134,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  iconContainer: {
+  tabIconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    height: '100%',
-    width: 60,
+    width: 68,
+    height: 56,
+    borderRadius: 18,
+    paddingVertical: 4,
   },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    position: 'absolute',
-    bottom: 2,
+  tabLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 2,
+    fontFamily: 'PlusJakartaSans_700Bold',
   },
 });

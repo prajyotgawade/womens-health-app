@@ -86,12 +86,10 @@ export default function MedicineDashboard() {
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         
         {/* Header */}
-        <Animated.View entering={FadeInDown.duration(400).springify()} style={[styles.header, { paddingTop: Spacing.two }]}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={28} color={theme.text} />
-          </Pressable>
-          <ThemedText type="titleLarge" style={{ color: theme.text, fontWeight: '800' }}>Medications</ThemedText>
-          <View style={{ width: 44 }} /> 
+        <Animated.View entering={FadeInDown.duration(400).springify()} style={[styles.header, { paddingBottom: Spacing.two }]}>
+          <ThemedText type="displaySmall" style={{ color: theme.primary, fontWeight: '900', letterSpacing: -1, fontSize: 26 }}>
+            Medications
+          </ThemedText>
         </Animated.View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -201,7 +199,7 @@ export default function MedicineDashboard() {
       {/* Floating Action Button */}
       <Animated.View 
         entering={FadeIn.duration(600).delay(500)} 
-        style={[styles.fabContainer, { bottom: insets.bottom + Spacing.four }]}
+        style={[styles.fabContainer, { bottom: BottomTabInset + 12 }]}
       >
         <Pressable 
           style={[styles.fab, { backgroundColor: theme.primary }]}
@@ -239,7 +237,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   scrollContent: {
-    paddingBottom: Spacing.six + 80,
+    paddingBottom: BottomTabInset + Spacing.six,
   },
   calendarStrip: {
     marginBottom: Spacing.six,

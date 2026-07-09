@@ -1,55 +1,100 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn, Layout } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { askAI } from '@/utils/ai';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/auth-context';
 
 type Message = { id: string; text: string; isUser: boolean };
 
 const QUICK_PROMPTS = [
-  "When is my next cycle?",
-  "How to manage cramps?",
-  "Why am I so fatigued?",
-  "When am I ovulating?"
+  "Explain luteal phase energy levels?",
+  "How to naturally relieve cramps?",
+  "Is cycle irregularity linked to PCOS?",
+  "What is seed cycling?"
 ];
 
 export default function AIChatScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { session } = useAuth();
+  const user = session?.user;
   
   const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: 'Hi Sarah! I am your AI Health Assistant. Ask me about your cycle, symptoms, or general wellness. \n\n*Note: I cannot provide medical diagnoses.*', isUser: false }
+    { id: 'welcome', text: 'Hi! I am your AI Health Assistant. Ask me anything about your cycle, symptoms, or general wellness. \n\n*Note: I cannot provide medical diagnoses.*', isUser: false }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  useEffect(() => {
+    fetchAIChatHistory();
+  }, [user]);
+
+  const fetchAIChatHistory = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from('ai_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (data && data.length > 0) {
+        const historyMsgs: Message[] = [];
+        data.forEach(chat => {
+          historyMsgs.push({ id: `${chat.id}-q`, text: chat.prompt, isUser: true });
+          historyMsgs.push({ id: `${chat.id}-a`, text: chat.response, isUser: false });
+        });
+        setMessages(prev => [...prev, ...historyMsgs]);
+        setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 200);
+      }
+    } catch (e) {
+      console.warn('Error loading AI history:', e);
+    }
+  };
+
   const sendMessage = async (text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !user) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const userMsg: Message = { id: Date.now().toString(), text, isUser: true };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsTyping(true);
 
-    // Auto scroll down after user sends
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
 
-    const response = await askAI(text);
-    
-    setIsTyping(false);
-    const aiMsg: Message = { id: (Date.now() + 1).toString(), text: response, isUser: false };
-    setMessages(prev => [...prev, aiMsg]);
-    
-    // Auto scroll down after AI replies
-    setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    try {
+      const response = await askAI(text);
+      
+      // Save prompt-response log to Supabase
+      const { error } = await supabase.from('ai_history').insert({
+        user_id: user.id,
+        prompt: text,
+        response: response,
+      });
+
+      if (error) console.warn('History save warning:', error);
+
+      setIsTyping(false);
+      const aiMsg: Message = { id: (Date.now() + 1).toString(), text: response, isUser: false };
+      setMessages(prev => [...prev, aiMsg]);
+      
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
+    } catch (e) {
+      console.error(e);
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -63,8 +108,8 @@ export default function AIChatScreen() {
           </Pressable>
           <View style={styles.headerTitle}>
             <Ionicons name="sparkles" size={18} color={theme.primary} style={{ marginRight: 6 }} />
-            <ThemedText type="titleMedium" style={{ color: theme.text }}>
-              AI Assistant
+            <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '800' }}>
+              Aura AI Health Companion
             </ThemedText>
           </View>
           <View style={{ width: 44 }} />
@@ -72,9 +117,9 @@ export default function AIChatScreen() {
 
         {/* Safety Disclaimer Banner */}
         <View style={[styles.disclaimer, { backgroundColor: theme.errorContainer }]}>
-          <Ionicons name="warning-outline" size={16} color={theme.error} style={{ marginRight: 8 }} />
-          <ThemedText type="labelSmall" style={{ color: theme.error, flex: 1 }}>
-            AI guidance is not a substitute for professional medical advice.
+          <Ionicons name="warning" size={16} color={theme.error} style={{ marginRight: 8 }} />
+          <ThemedText type="labelSmall" style={{ color: theme.error, flex: 1, fontWeight: '700' }}>
+            Aura AI does not provide clinical diagnoses.
           </ThemedText>
         </View>
 
@@ -88,21 +133,21 @@ export default function AIChatScreen() {
             contentContainerStyle={styles.chatScroll}
             showsVerticalScrollIndicator={false}
           >
-            {messages.map((msg, index) => (
+            {messages.map((msg) => (
               <Animated.View 
                 key={msg.id} 
                 layout={Layout.springify()}
-                entering={FadeInDown.duration(400)}
+                entering={FadeInDown.duration(300)}
                 style={[
                   styles.messageBubble,
                   msg.isUser ? styles.userBubble : styles.aiBubble,
                   { backgroundColor: msg.isUser ? theme.primary : theme.backgroundElement }
                 ]}
               >
-                {!msg.isUser && (
-                  <Ionicons name="sparkles" size={16} color={theme.primary} style={{ marginBottom: 4 }} />
+                {!msg.isUser && msg.id !== 'welcome' && (
+                  <Ionicons name="sparkles" size={14} color={theme.primary} style={{ marginBottom: 4 }} />
                 )}
-                <ThemedText type="bodyMedium" style={{ color: msg.isUser ? '#fff' : theme.text }}>
+                <ThemedText type="bodyMedium" style={{ color: msg.isUser ? '#fff' : theme.text, lineHeight: 20 }}>
                   {msg.text}
                 </ThemedText>
               </Animated.View>
@@ -111,7 +156,7 @@ export default function AIChatScreen() {
             {isTyping && (
               <Animated.View entering={FadeIn.duration(400)} style={[styles.messageBubble, styles.aiBubble, styles.typingBubble, { backgroundColor: theme.backgroundElement }]}>
                 <ActivityIndicator size="small" color={theme.primary} />
-                <ThemedText type="labelMedium" style={{ color: theme.textSecondary, marginLeft: 8 }}>Thinking...</ThemedText>
+                <ThemedText type="labelMedium" style={{ color: theme.textSecondary, marginLeft: 8 }}>Formulating insight...</ThemedText>
               </Animated.View>
             )}
           </ScrollView>
@@ -125,7 +170,7 @@ export default function AIChatScreen() {
                   style={[styles.promptChip, { borderColor: theme.primary }]}
                   onPress={() => sendMessage(prompt)}
                 >
-                  <ThemedText type="labelMedium" style={{ color: theme.primary }}>{prompt}</ThemedText>
+                  <ThemedText type="labelMedium" style={{ color: theme.primary, fontWeight: '600' }}>{prompt}</ThemedText>
                 </Pressable>
               ))}
             </ScrollView>
@@ -135,7 +180,7 @@ export default function AIChatScreen() {
           <View style={[styles.inputContainer, { borderTopColor: theme.backgroundElement }]}>
             <TextInput
               style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-              placeholder="Ask me anything..."
+              placeholder="Ask about cycle phases, symptoms..."
               placeholderTextColor={theme.textSecondary}
               value={input}
               onChangeText={setInput}
@@ -182,7 +227,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Spacing.four,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.two,
   },
   keyboardView: {
     flex: 1,

@@ -1,40 +1,85 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Pressable, ActivityIndicator, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { format, addDays, subDays } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/context/auth-context';
 
 const TODAY = new Date();
 const CALENDAR_DAYS = Array.from({ length: 14 }).map((_, i) => addDays(subDays(TODAY, 7), i));
-
-const INITIAL_MEDS = [
-  { id: '1', name: 'Birth Control', dosage: '1 Pill', time: '09:00 AM', taken: true, icon: 'medical' },
-  { id: '2', name: 'Vitamin D', dosage: '2000 IU', time: '10:00 AM', taken: false, icon: 'sunny' },
-  { id: '3', name: 'Iron Supplement', dosage: '65mg', time: '08:00 PM', taken: false, icon: 'water' },
-];
 
 export default function MedicineDashboard() {
   const router = useRouter();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { session } = useAuth();
+  const user = session?.user;
   
+  const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(TODAY);
-  const [meds, setMeds] = useState(INITIAL_MEDS);
+  const [meds, setMeds] = useState<any[]>([]);
+  const [takenMeds, setTakenMeds] = useState<string[]>([]); // Array of taken med IDs for selected day
 
-  const toggleMed = (id: string) => {
-    setMeds(prev => prev.map(m => m.id === id ? { ...m, taken: !m.taken } : m));
+  useEffect(() => {
+    fetchMedications();
+  }, [user, selectedDate]);
+
+  const fetchMedications = async () => {
+    if (!user) return;
+    setLoading(true);
+
+    try {
+      const { data } = await supabase
+        .from('medications')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+      
+      if (data) {
+        setMeds(data);
+        // Simulate or load completed status for selected date from MMKV/local state
+        // For prototype purposes, initialize some as taken randomly or load from memory
+        const dateKey = format(selectedDate, 'yyyy-MM-dd');
+        // Let's generate a stable mock completed list based on the date and med ID
+        const completed = data
+          .filter((m, idx) => (idx + dateKey.length) % 2 === 0)
+          .map(m => m.id);
+        setTakenMeds(completed);
+      }
+    } catch (e) {
+      console.warn('Error loading medications:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const takenCount = meds.filter(m => m.taken).length;
-  const progress = takenCount / meds.length;
+  const toggleMed = (id: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setTakenMeds(prev => 
+      prev.includes(id) ? prev.filter(mId => mId !== id) : [...prev, id]
+    );
+  };
+
+  const takenCount = meds.filter(m => takenMeds.includes(m.id)).length;
+  const progress = meds.length > 0 ? takenCount / meds.length : 0;
+
+  if (loading && meds.length === 0) {
+    return (
+      <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -45,7 +90,7 @@ export default function MedicineDashboard() {
           <Pressable onPress={() => router.back()} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={28} color={theme.text} />
           </Pressable>
-          <ThemedText type="titleLarge" style={{ color: theme.text }}>Medication</ThemedText>
+          <ThemedText type="titleLarge" style={{ color: theme.text, fontWeight: '800' }}>Medications</ThemedText>
           <View style={{ width: 44 }} /> 
         </Animated.View>
 
@@ -57,20 +102,27 @@ export default function MedicineDashboard() {
               horizontal 
               showsHorizontalScrollIndicator={false} 
               contentContainerStyle={styles.calendarScroll}
-              contentOffset={{ x: 7 * 56 - Dimensions.get('window').width / 2 + 28, y: 0 }} // rough centering
+              contentOffset={{ x: 7 * 56 - Dimensions.get('window').width / 2 + 28, y: 0 }}
             >
               {CALENDAR_DAYS.map((date) => {
                 const isSelected = format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
                 return (
                   <Pressable 
                     key={date.toISOString()} 
-                    onPress={() => setSelectedDate(date)}
-                    style={[styles.calendarDay, isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedDate(date);
+                    }}
+                    style={[
+                      styles.calendarDay, 
+                      { backgroundColor: theme.backgroundElement },
+                      isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
+                    ]}
                   >
                     <ThemedText type="labelSmall" style={{ color: isSelected ? theme.onPrimary : theme.textSecondary, marginBottom: 4 }}>
                       {format(date, 'EE').charAt(0)}
                     </ThemedText>
-                    <ThemedText type="titleMedium" style={{ color: isSelected ? theme.onPrimary : theme.text }}>
+                    <ThemedText type="titleMedium" style={{ color: isSelected ? theme.onPrimary : theme.text, fontWeight: '700' }}>
                       {format(date, 'd')}
                     </ThemedText>
                   </Pressable>
@@ -82,38 +134,50 @@ export default function MedicineDashboard() {
           {/* Progress Section */}
           <Animated.View entering={FadeInDown.duration(400).delay(200).springify()} style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <ThemedText type="titleMedium" style={{ color: theme.text }}>Today's Compliance</ThemedText>
-              <ThemedText type="labelMedium" style={{ color: theme.primary }}>{takenCount} of {meds.length} taken</ThemedText>
+              <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '700' }}>Today's Compliance</ThemedText>
+              <ThemedText type="labelMedium" style={{ color: theme.primary, fontWeight: '700' }}>{takenCount} of {meds.length} taken</ThemedText>
             </View>
             <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement }]}>
-              <Animated.View style={[styles.progressBarFill, { backgroundColor: theme.primary, width: `${progress * 100}%` }]} />
+              <View style={[styles.progressBarFill, { backgroundColor: theme.primary, width: `${progress * 100}%` }]} />
             </View>
           </Animated.View>
 
           {/* Meds List */}
           <Animated.View entering={FadeInDown.duration(400).delay(300).springify()} style={styles.medsList}>
-             {meds.map((med, index) => (
-                <Animated.View key={med.id} entering={FadeInDown.duration(400).delay(350 + (index * 50)).springify()}>
-                  <Pressable onPress={() => toggleMed(med.id)}>
-                    <Card variant={med.taken ? 'filled' : 'elevated'} style={[styles.medCard, med.taken && { backgroundColor: theme.primaryContainer }]}>
-                      <View style={[styles.medIconWrap, { backgroundColor: med.taken ? theme.primary : theme.backgroundElement }]}>
-                        <Ionicons name={med.icon as any} size={24} color={med.taken ? theme.onPrimary : theme.textSecondary} />
-                      </View>
-                      <View style={styles.medContent}>
-                        <ThemedText type="titleMedium" style={{ color: med.taken ? theme.primary : theme.text }}>
-                          {med.name}
-                        </ThemedText>
-                        <ThemedText type="labelMedium" style={{ color: med.taken ? theme.primary : theme.textSecondary, opacity: 0.8 }}>
-                          {med.dosage} • {med.time}
-                        </ThemedText>
-                      </View>
-                      <View style={[styles.checkbox, med.taken && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
-                        {med.taken && <Ionicons name="checkmark" size={16} color={theme.onPrimary} />}
-                      </View>
-                    </Card>
-                  </Pressable>
-                </Animated.View>
-             ))}
+             {meds.length > 0 ? (
+               meds.map((med, index) => {
+                 const isTaken = takenMeds.includes(med.id);
+                 return (
+                    <Animated.View key={med.id} entering={FadeInDown.duration(400).delay(350 + (index * 50)).springify()}>
+                      <Pressable onPress={() => toggleMed(med.id)}>
+                        <Card variant={isTaken ? 'filled' : 'elevated'} style={[styles.medCard, isTaken && { backgroundColor: theme.primaryContainer }]}>
+                          <View style={[styles.medIconWrap, { backgroundColor: isTaken ? theme.primary : theme.backgroundElement }]}>
+                            <Ionicons name="medical" size={24} color={isTaken ? theme.onPrimary : theme.textSecondary} />
+                          </View>
+                          <View style={styles.medContent}>
+                            <ThemedText type="titleMedium" style={{ color: isTaken ? theme.primary : theme.text, fontWeight: '700' }}>
+                              {med.name}
+                            </ThemedText>
+                            <ThemedText type="labelMedium" style={{ color: isTaken ? theme.primary : theme.textSecondary, opacity: 0.8 }}>
+                              {med.dosage} • {med.frequency}
+                            </ThemedText>
+                          </View>
+                          <View style={[styles.checkbox, isTaken && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
+                            {isTaken && <Ionicons name="checkmark" size={16} color={theme.onPrimary} />}
+                          </View>
+                        </Card>
+                      </Pressable>
+                    </Animated.View>
+                 );
+               })
+             ) : (
+               <View style={styles.emptyContainer}>
+                 <Ionicons name="medical-outline" size={48} color={theme.textSecondary} style={{ opacity: 0.5, marginBottom: 8 }} />
+                 <ThemedText type="titleMedium" style={{ color: theme.textSecondary, opacity: 0.8 }}>
+                   No medications tracked.
+                 </ThemedText>
+               </View>
+             )}
           </Animated.View>
 
         </ScrollView>
@@ -121,7 +185,7 @@ export default function MedicineDashboard() {
 
       {/* Floating Action Button */}
       <Animated.View 
-        entering={FadeIn.duration(800).delay(600)} 
+        entering={FadeIn.duration(600).delay(500)} 
         style={[styles.fabContainer, { bottom: insets.bottom + Spacing.four }]}
       >
         <Pressable 
@@ -136,11 +200,14 @@ export default function MedicineDashboard() {
   );
 }
 
-import { Dimensions } from 'react-native';
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   safeArea: {
     flex: 1,
@@ -157,7 +224,7 @@ const styles = StyleSheet.create({
     width: 44,
   },
   scrollContent: {
-    paddingBottom: Spacing.six + 80, // Space for FAB
+    paddingBottom: Spacing.six + 80,
   },
   calendarStrip: {
     marginBottom: Spacing.six,
@@ -170,8 +237,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 64,
     borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -202,6 +267,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: Spacing.four,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.05)',
   },
@@ -231,15 +297,20 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   fab: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
+    shadowColor: '#B64B74',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
     elevation: 8,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
 });

@@ -49,20 +49,29 @@ function RootLayoutNav() {
   });
 
   useEffect(() => {
-    if (fontError) throw fontError;
-  }, [fontError]);
-
-  useEffect(() => {
     if (loading || !fontsLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isOnboardingPage = segments[1] === 'onboarding';
 
-    if (!session && !inAuthGroup) {
-      // Redirect to the login page.
-      router.replace('/(auth)/login' as any);
-    } else if (session && inAuthGroup) {
-      // Redirect away from the login page.
-      router.replace('/(app)' as any);
+    if (!session) {
+      if (!inAuthGroup) {
+        // Redirect to the login page.
+        router.replace('/(auth)/login' as any);
+      }
+    } else {
+      const isCompleted = !!session.user?.user_metadata?.onboarding_completed;
+      if (!isCompleted) {
+        if (!isOnboardingPage) {
+          // Redirect to profile completion onboarding.
+          router.replace('/(auth)/onboarding' as any);
+        }
+      } else {
+        if (inAuthGroup) {
+          // Redirect to the main app dashboard.
+          router.replace('/(app)' as any);
+        }
+      }
     }
 
     SplashScreen.hideAsync();

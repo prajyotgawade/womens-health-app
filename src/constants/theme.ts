@@ -183,5 +183,5 @@ export const Elevation = {
 
 export type ElevationLevel = keyof typeof Elevation;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+export const BottomTabInset = Platform.select({ ios: 100, android: 100 }) ?? 100;
 export const MaxContentWidth = 800;

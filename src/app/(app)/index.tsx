@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Pressable, Platform, Dimensions, StatusBar, ActivityIndicator, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, { FadeInDown, FadeIn, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn, useAnimatedStyle, useSharedValue, withSpring, withRepeat, withSequence, withTiming } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { format, differenceInDays, addDays, subDays, parseISO } from 'date-fns';
+import { format, differenceInDays, addDays, parseISO } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedView } from '@/components/themed-view';
@@ -13,7 +13,6 @@ import { ThemedText } from '@/components/themed-text';
 import { Spacing, BottomTabInset } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/card';
-import { GlassView } from '@/components/ui/glass-view';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 import { generatePredictions } from '@/utils/prediction';
@@ -21,7 +20,6 @@ import { generatePredictions } from '@/utils/prediction';
 const { width } = Dimensions.get('window');
 
 const TODAY = new Date();
-const CALENDAR_DAYS = Array.from({ length: 7 }).map((_, i) => addDays(subDays(TODAY, 3), i));
 
 const QUOTES = [
   "Honor your body's natural wisdom and pace.",
@@ -30,6 +28,13 @@ const QUOTES = [
   "You are strong, resilient, and uniquely balanced.",
   "Rest is productive. Nourish your mind and body."
 ];
+
+const PHASE_INFO: Record<string, { emoji: string; description: string; tip: string }> = {
+  Menstruation: { emoji: '🩸', description: 'Rest & restore. Your body is shedding and renewing.', tip: 'Focus on warmth, rest, and iron-rich foods.' },
+  Follicular: { emoji: '🌱', description: 'Energy rising. Estrogen is climbing — you feel lighter.', tip: 'Great time for new goals and creative projects.' },
+  Ovulatory: { emoji: '✨', description: 'Peak power. You\'re at your most social and energetic.', tip: 'Ideal for presentations, dates, and big workouts.' },
+  Luteal: { emoji: '🌙', description: 'Wind down. Progesterone rises — honor your need for calm.', tip: 'Prioritize self-care, magnesium, and lighter meals.' },
+};
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -40,34 +45,51 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const [userName, setUserName] = useState(' Sarah');
+  const [userName, setUserName] = useState('');
   const [avatarEmoji, setAvatarEmoji] = useState('✨');
-  
-  // Predictions state
+
   const [cycleDay, setCycleDay] = useState(1);
   const [daysUntilPeriod, setDaysUntilPeriod] = useState(12);
   const [currentPhase, setCurrentPhase] = useState('Follicular');
-  const [fertilityStatus, setFertilityStatus] = useState('Medium');
+  const [fertilityStatus, setFertilityStatus] = useState('Low');
   const [ovulationText, setOvulationText] = useState('in 6 days');
 
-  // Logs state
   const [waterLogged, setWaterLogged] = useState(0);
   const [waterGoal, setWaterGoal] = useState(8);
   const [sleepLogged, setSleepLogged] = useState(0);
   const [sleepGoal, setSleepGoal] = useState(8);
-  
+
   const [takenMedsCount, setTakenMedsCount] = useState(0);
   const [totalMedsCount, setTotalMedsCount] = useState(0);
   const [quote, setQuote] = useState(QUOTES[0]);
 
-  // Ring Animations
-  const ringScale = useSharedValue(0.9);
+  const pulseScale = useSharedValue(1);
+  const glowOpacity = useSharedValue(0.6);
+
   const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: ringScale.value }],
+    transform: [{ scale: pulseScale.value }],
+  }));
+  const glowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
   }));
 
   useEffect(() => {
-    ringScale.value = withSpring(1, { damping: 12, stiffness: 100 });
+    pulseScale.value = withRepeat(
+      withSequence(
+        withTiming(1.03, { duration: 2000 }),
+        withTiming(1, { duration: 2000 })
+      ),
+      -1,
+      true
+    );
+    glowOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.9, { duration: 2000 }),
+        withTiming(0.5, { duration: 2000 })
+      ),
+      -1,
+      true
+    );
     setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
     fetchDashboardData();
   }, [user]);
@@ -77,15 +99,13 @@ export default function HomeScreen() {
     setLoading(true);
 
     try {
-      // 1. Fetch Profile
       const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
       const nickname = user.user_metadata?.nickname || profile?.full_name?.split(' ')[0] || 'User';
       setUserName(nickname);
       setAvatarEmoji(user.user_metadata?.avatar_emoji || '✨');
       setWaterGoal(user.user_metadata?.water_goal || 8);
-      setSleepGoal(8); // Default sleep goal
+      setSleepGoal(8);
 
-      // 2. Fetch Cycle data & calculate predictions
       const { data: cycles } = await supabase.from('cycles').select('*').eq('user_id', user.id).order('start_date', { ascending: false });
       if (cycles && cycles.length > 0) {
         const cycleInputs = cycles.map(c => ({ startDate: c.start_date, endDate: c.end_date }));
@@ -104,7 +124,7 @@ export default function HomeScreen() {
           const diffOvu = differenceInDays(preds.ovulationDate, today);
           if (diffOvu === 0) setOvulationText('Today');
           else if (diffOvu === 1) setOvulationText('Tomorrow');
-          else if (diffOvu > 1) setOvulationText(`in ${diffOvu} days`);
+          else if (diffOvu > 1) setOvulationText(`in ${diffOvu}d`);
           else setOvulationText('Passed');
 
           if (currentDay <= (user.user_metadata?.period_length || 5)) setCurrentPhase('Menstruation');
@@ -114,7 +134,6 @@ export default function HomeScreen() {
         }
       }
 
-      // 3. Fetch logs for today (Water + Sleep)
       const todayStr = format(new Date(), 'yyyy-MM-dd');
       const [waterData, sleepData, medsData] = await Promise.all([
         supabase.from('water_logs').select('amount_ml').eq('user_id', user.id).eq('date', todayStr),
@@ -124,7 +143,7 @@ export default function HomeScreen() {
 
       if (waterData.data) {
         const totalMl = waterData.data.reduce((acc, log) => acc + log.amount_ml, 0);
-        setWaterLogged(Math.round(totalMl / 250)); 
+        setWaterLogged(Math.round(totalMl / 250));
       }
       if (sleepData.data && sleepData.data.length > 0) {
         const hours = sleepData.data.reduce((acc, log) => acc + Number(log.hours), 0);
@@ -132,9 +151,8 @@ export default function HomeScreen() {
       }
       if (medsData.data) {
         setTotalMedsCount(medsData.data.length);
-        setTakenMedsCount(medsData.data.filter((_, i) => i % 2 === 0).length); // Mock taken
+        setTakenMedsCount(medsData.data.filter((_, i) => i % 2 === 0).length);
       }
-
     } catch (error) {
       console.warn('Dashboard fetch error:', error);
     } finally {
@@ -151,12 +169,12 @@ export default function HomeScreen() {
     } catch (e) { }
   };
 
-  const getPhaseColors = (): readonly [string, string] => {
+  const getPhaseGradient = (): readonly [string, string, string] => {
     switch (currentPhase) {
-      case 'Menstruation': return [theme.calendar.periodBg, theme.calendar.period];
-      case 'Follicular': return ['#4FC3F7', '#1E88E5']; // Blues
-      case 'Ovulatory': return [theme.calendar.ovulationBg, theme.calendar.ovulation];
-      default: return [theme.calendar.predictedBg, theme.calendar.predicted];
+      case 'Menstruation': return ['#4A0010', '#B00030', '#FF2D55'];
+      case 'Follicular': return ['#0A2463', '#1E6FD9', '#4FC3F7'];
+      case 'Ovulatory': return ['#004D40', '#00796B', '#26C6DA'];
+      default: return ['#2D1B69', '#5C2D91', '#9C6ADE'];
     }
   };
 
@@ -168,160 +186,233 @@ export default function HomeScreen() {
     );
   }
 
-  // Calculate progress
   const waterProgress = Math.min((waterLogged / waterGoal) * 100, 100);
   const sleepProgress = Math.min((sleepLogged / sleepGoal) * 100, 100);
+  const phaseInfo = PHASE_INFO[currentPhase] || PHASE_INFO.Follicular;
+  const gradient = getPhaseGradient();
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} translucent backgroundColor="transparent" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
-          
+
           {/* Header */}
-          <Animated.View entering={FadeInDown.duration(600).springify()} style={styles.header}>
+          <Animated.View entering={FadeInDown.duration(500).springify()} style={styles.header}>
             <View>
-              <ThemedText type="labelMedium" style={{ color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>
-                {format(TODAY, 'EEEE, MMM d')}
+              <ThemedText type="labelMedium" style={{ color: theme.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5, fontSize: 10 }}>
+                {format(TODAY, 'EEEE, MMMM d')}
               </ThemedText>
-              <ThemedText type="displaySmall" style={{ fontSize: 26, color: theme.text, fontWeight: '800', marginTop: Spacing.half }}>
+              <ThemedText style={{ fontSize: 24, color: theme.text, fontWeight: '800', marginTop: 2, letterSpacing: -0.5 }}>
                 Hello, {userName} {avatarEmoji}
               </ThemedText>
             </View>
-            <Pressable 
-              style={[styles.aiShortcut, { backgroundColor: theme.primaryContainer }]}
+            <Pressable
+              style={[styles.aiBtn, { backgroundColor: theme.primaryContainer }]}
               onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push('/ai'); }}
             >
-              <Ionicons name="sparkles" size={18} color={theme.primary} />
+              <Ionicons name="sparkles" size={20} color={theme.primary} />
             </Pressable>
           </Animated.View>
 
-          {/* Calendar Strip */}
-          <Animated.View entering={FadeInDown.duration(600).delay(100).springify()} style={styles.calendarStrip}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.calendarScroll}>
-              {CALENDAR_DAYS.map((date, index) => {
-                const isSelected = index === 3;
-                return (
-                  <View key={date.toISOString()} style={[styles.calendarDay, { backgroundColor: isSelected ? theme.primary : theme.backgroundElement }]}>
-                    <ThemedText type="labelSmall" style={{ color: isSelected ? theme.onPrimary : theme.textSecondary, marginBottom: 2, fontSize: 10 }}>
-                      {format(date, 'EE').charAt(0)}
-                    </ThemedText>
-                    <ThemedText type="titleMedium" style={{ color: isSelected ? theme.onPrimary : theme.text, fontWeight: '800', fontSize: 14 }}>
-                      {format(date, 'd')}
-                    </ThemedText>
-                    {isSelected && <View style={styles.calendarDot} />}
-                  </View>
-                );
-              })}
-            </ScrollView>
-          </Animated.View>
+          {/* Hero Phase Card */}
+          <Animated.View entering={FadeInDown.duration(600).delay(100).springify()} style={styles.heroWrapper}>
+            <LinearGradient
+              colors={gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroCard}
+            >
+              {/* Glow orb */}
+              <Animated.View style={[styles.glowOrb, glowStyle]} />
 
-          {/* Hero Smart Cycle visualizer (re-scaled dynamically) */}
-          <Animated.View entering={FadeInDown.duration(600).delay(200).springify()} style={styles.heroContainer}>
-            <LinearGradient colors={getPhaseColors()} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.heroRingCard, { shadowColor: getPhaseColors()[1] }]}>
-              <Animated.View style={[styles.ringInner, pulseStyle]}>
-                <View style={styles.ringContent}>
-                  <ThemedText type="labelMedium" style={styles.ringLabel}>{currentPhase.toUpperCase()} PHASE</ThemedText>
-                  <ThemedText type="displayLarge" style={styles.ringNumber}>
-                    {currentPhase === 'Menstruation' ? cycleDay : daysUntilPeriod}
+              <View style={styles.heroContent}>
+                <View style={styles.heroLeft}>
+                  <View style={styles.phaseBadge}>
+                    <ThemedText style={{ color: 'rgba(255,255,255,0.9)', fontSize: 10, fontWeight: '800', letterSpacing: 2, textTransform: 'uppercase' }}>
+                      {currentPhase}
+                    </ThemedText>
+                  </View>
+                  <ThemedText style={{ color: '#fff', fontSize: 13, marginTop: Spacing.two, opacity: 0.85, lineHeight: 18, maxWidth: 180 }}>
+                    {phaseInfo.description}
                   </ThemedText>
-                  <ThemedText type="bodyMedium" style={styles.ringPeriodText}>
-                    {currentPhase === 'Menstruation' ? 'Flow Day' : 'Days until period'}
-                  </ThemedText>
+                  <View style={styles.heroTipRow}>
+                    <Ionicons name="bulb-outline" size={12} color="rgba(255,255,255,0.7)" />
+                    <ThemedText style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginLeft: 4, flex: 1, lineHeight: 15 }}>
+                      {phaseInfo.tip}
+                    </ThemedText>
+                  </View>
                 </View>
-                <View style={styles.ringSubBadge}>
-                  <ThemedText type="labelSmall" style={{ color: '#fff', fontWeight: '800', fontSize: 10 }}>Cycle Day {cycleDay}</ThemedText>
-                </View>
-              </Animated.View>
+
+                <Animated.View style={[styles.heroRingWrap, pulseStyle]}>
+                  <View style={styles.heroRing}>
+                    <ThemedText style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, letterSpacing: 1, fontWeight: '700', marginBottom: 2 }}>
+                      DAY
+                    </ThemedText>
+                    <ThemedText style={{ color: '#fff', fontSize: 52, fontWeight: '900', lineHeight: 56 }}>
+                      {currentPhase === 'Menstruation' ? cycleDay : daysUntilPeriod}
+                    </ThemedText>
+                    <ThemedText style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, fontWeight: '600', textAlign: 'center' }}>
+                      {currentPhase === 'Menstruation' ? 'of flow' : 'until period'}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.cycleBadge}>
+                    <ThemedText style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>
+                      Cycle Day {cycleDay}
+                    </ThemedText>
+                  </View>
+                </Animated.View>
+              </View>
             </LinearGradient>
           </Animated.View>
 
-          {/* Grid visualizers: Daily Rings & Vitals combined into clean 2-column grid cards */}
-          <Animated.View entering={FadeInDown.duration(600).delay(300).springify()} style={styles.sectionContainer}>
-            <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '800', marginBottom: Spacing.three }}>
-              Daily Progress & Vitals
-            </ThemedText>
-            
-            <View style={styles.gridContainer}>
-              <Card variant="elevated" style={[styles.gridCard, { borderColor: theme.outlineVariant }]}>
-                <Ionicons name="water" size={24} color="#4FC3F7" style={{ marginBottom: Spacing.one }} />
-                <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '800' }}>{waterLogged}/{waterGoal}</ThemedText>
-                <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontSize: 10 }}>Glasses Water</ThemedText>
-                <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement, marginTop: Spacing.two }]}>
-                  <View style={[styles.progressBarFill, { width: `${waterProgress}%`, backgroundColor: '#4FC3F7' }]} />
-                </View>
-                <Pressable style={[styles.addRingBtn, { backgroundColor: 'rgba(79, 195, 247, 0.12)' }]} onPress={handleWaterIncrement}>
-                  <Ionicons name="add" size={16} color="#4FC3F7" />
-                </Pressable>
-              </Card>
-              
-              <Card variant="elevated" style={[styles.gridCard, { borderColor: theme.outlineVariant }]}>
-                <Ionicons name="moon" size={24} color="#9575CD" style={{ marginBottom: Spacing.one }} />
-                <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '800' }}>{sleepLogged}h</ThemedText>
-                <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontSize: 10 }}>Logged Sleep</ThemedText>
-                <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement, marginTop: Spacing.two }]}>
-                  <View style={[styles.progressBarFill, { width: `${sleepProgress}%`, backgroundColor: '#9575CD' }]} />
-                </View>
-                <Pressable style={[styles.addRingBtn, { backgroundColor: 'rgba(149, 117, 205, 0.12)' }]} onPress={() => router.push('/log')}>
-                  <Ionicons name="add" size={16} color="#9575CD" />
-                </Pressable>
-              </Card>
+          {/* Quick Stats Row */}
+          <Animated.View entering={FadeInDown.duration(600).delay(200).springify()} style={styles.statsRow}>
+            <View style={[styles.statPill, { backgroundColor: theme.calendar.fertileBg }]}>
+              <Ionicons name="flower-outline" size={14} color={theme.calendar.fertile} />
+              <View style={styles.statPillText}>
+                <ThemedText style={{ color: theme.calendar.fertile, fontSize: 13, fontWeight: '800' }}>{fertilityStatus}</ThemedText>
+                <ThemedText style={{ color: theme.calendar.fertile, fontSize: 9, opacity: 0.8, fontWeight: '600' }}>FERTILITY</ThemedText>
+              </View>
+            </View>
 
-              <Card variant="filled" style={[styles.gridCard, { backgroundColor: theme.calendar.fertileBg, paddingBottom: Spacing.four }]}>
-                <View style={[styles.vitalIconWrap, { backgroundColor: 'rgba(255,255,255,0.45)' }]}>
-                  <Ionicons name="flower" size={16} color={theme.calendar.fertile} />
-                </View>
-                <ThemedText type="titleMedium" style={{ color: theme.calendar.fertile, marginTop: Spacing.two, fontWeight: '800' }}>{fertilityStatus}</ThemedText>
-                <ThemedText type="labelSmall" style={{ color: theme.calendar.fertile, opacity: 0.8, fontSize: 10 }}>Fertility</ThemedText>
-              </Card>
+            <View style={[styles.statPill, { backgroundColor: theme.calendar.ovulationBg }]}>
+              <Ionicons name="radio-button-on-outline" size={14} color={theme.calendar.ovulation} />
+              <View style={styles.statPillText}>
+                <ThemedText style={{ color: theme.calendar.ovulation, fontSize: 13, fontWeight: '800' }}>{ovulationText}</ThemedText>
+                <ThemedText style={{ color: theme.calendar.ovulation, fontSize: 9, opacity: 0.8, fontWeight: '600' }}>OVULATION</ThemedText>
+              </View>
+            </View>
 
-              <Card variant="filled" style={[styles.gridCard, { backgroundColor: theme.calendar.ovulationBg, paddingBottom: Spacing.four }]}>
-                <View style={[styles.vitalIconWrap, { backgroundColor: 'rgba(255,255,255,0.45)' }]}>
-                  <Ionicons name="radio-button-on" size={16} color={theme.calendar.ovulation} />
-                </View>
-                <ThemedText type="titleMedium" style={{ color: theme.calendar.ovulation, marginTop: Spacing.two, fontWeight: '800' }}>{ovulationText}</ThemedText>
-                <ThemedText type="labelSmall" style={{ color: theme.calendar.ovulation, opacity: 0.8, fontSize: 10 }}>Ovulation</ThemedText>
-              </Card>
+            <View style={[styles.statPill, { backgroundColor: theme.primaryContainer }]}>
+              <Ionicons name="refresh-outline" size={14} color={theme.primary} />
+              <View style={styles.statPillText}>
+                <ThemedText style={{ color: theme.primary, fontSize: 13, fontWeight: '800' }}>{cycleDay}d</ThemedText>
+                <ThemedText style={{ color: theme.primary, fontSize: 9, opacity: 0.8, fontWeight: '600' }}>CYCLE DAY</ThemedText>
+              </View>
             </View>
           </Animated.View>
 
-          {/* Medication Module */}
-          {totalMedsCount > 0 && (
-            <Animated.View entering={FadeInDown.duration(600).delay(400).springify()} style={styles.sectionContainer}>
-              <Pressable onPress={() => router.push('/medicine')}>
-                <Card variant="filled" style={[styles.medicationCard, { backgroundColor: theme.secondaryContainer }]}>
-                  <View style={[styles.vitalIconWrap, { backgroundColor: 'rgba(255,255,255,0.4)', marginRight: Spacing.three }]}>
-                    <Ionicons name="medical" size={18} color={theme.secondary} />
+          {/* Daily Progress Section */}
+          <Animated.View entering={FadeInDown.duration(600).delay(300).springify()} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <ThemedText style={{ color: theme.text, fontWeight: '800', fontSize: 15, letterSpacing: -0.3 }}>
+                Today's Progress
+              </ThemedText>
+              <Pressable onPress={() => router.push('/log')}>
+                <ThemedText style={{ color: theme.primary, fontSize: 12, fontWeight: '700' }}>Log Day →</ThemedText>
+              </Pressable>
+            </View>
+
+            <View style={styles.progressGrid}>
+              {/* Water Card */}
+              <View style={[styles.progressCard, { backgroundColor: theme.surface, ...shadowStyle }]}>
+                <View style={styles.progressCardTop}>
+                  <View style={[styles.progressIconWrap, { backgroundColor: 'rgba(79,195,247,0.15)' }]}>
+                    <Ionicons name="water" size={18} color="#4FC3F7" />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <ThemedText type="titleMedium" style={{ color: theme.onSecondaryContainer, fontWeight: '800', fontSize: 14 }}>Medications</ThemedText>
-                    <ThemedText type="labelMedium" style={{ color: theme.onSecondaryContainer, opacity: 0.8, fontSize: 12 }}>
-                      {takenMedsCount}/{totalMedsCount} taken today
+                  <Pressable
+                    style={[styles.addBtn, { backgroundColor: 'rgba(79,195,247,0.12)' }]}
+                    onPress={handleWaterIncrement}
+                  >
+                    <Ionicons name="add" size={16} color="#4FC3F7" />
+                  </Pressable>
+                </View>
+                <ThemedText style={{ color: theme.text, fontSize: 22, fontWeight: '900', marginTop: Spacing.two }}>
+                  {waterLogged}<ThemedText style={{ fontSize: 13, color: theme.textSecondary, fontWeight: '600' }}>/{waterGoal}</ThemedText>
+                </ThemedText>
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '600', marginBottom: Spacing.two }}>glasses water</ThemedText>
+                <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement }]}>
+                  <View style={[styles.progressBarFill, { width: `${waterProgress}%`, backgroundColor: '#4FC3F7' }]} />
+                </View>
+              </View>
+
+              {/* Sleep Card */}
+              <View style={[styles.progressCard, { backgroundColor: theme.surface, ...shadowStyle }]}>
+                <View style={styles.progressCardTop}>
+                  <View style={[styles.progressIconWrap, { backgroundColor: 'rgba(149,117,205,0.15)' }]}>
+                    <Ionicons name="moon" size={18} color="#9575CD" />
+                  </View>
+                  <Pressable
+                    style={[styles.addBtn, { backgroundColor: 'rgba(149,117,205,0.12)' }]}
+                    onPress={() => router.push('/log')}
+                  >
+                    <Ionicons name="add" size={16} color="#9575CD" />
+                  </Pressable>
+                </View>
+                <ThemedText style={{ color: theme.text, fontSize: 22, fontWeight: '900', marginTop: Spacing.two }}>
+                  {sleepLogged}<ThemedText style={{ fontSize: 13, color: theme.textSecondary, fontWeight: '600' }}>h/{sleepGoal}h</ThemedText>
+                </ThemedText>
+                <ThemedText style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '600', marginBottom: Spacing.two }}>sleep logged</ThemedText>
+                <View style={[styles.progressBarBg, { backgroundColor: theme.backgroundElement }]}>
+                  <View style={[styles.progressBarFill, { width: `${sleepProgress}%`, backgroundColor: '#9575CD' }]} />
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Medication Banner */}
+          {totalMedsCount > 0 && (
+            <Animated.View entering={FadeInDown.duration(600).delay(400).springify()} style={styles.section}>
+              <Pressable onPress={() => router.push('/medicine')}>
+                <LinearGradient
+                  colors={[theme.secondaryContainer, theme.secondaryContainer]}
+                  style={styles.medBanner}
+                >
+                  <View style={[styles.medIconCircle, { backgroundColor: 'rgba(255,255,255,0.3)' }]}>
+                    <Ionicons name="medical" size={20} color={theme.secondary} />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: Spacing.three }}>
+                    <ThemedText style={{ color: theme.onSecondaryContainer, fontWeight: '800', fontSize: 14 }}>
+                      Medications
                     </ThemedText>
+                    <View style={styles.medProgress}>
+                      {Array.from({ length: totalMedsCount }).map((_, i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.medDot,
+                            { backgroundColor: i < takenMedsCount ? theme.secondary : 'rgba(255,255,255,0.3)' }
+                          ]}
+                        />
+                      ))}
+                      <ThemedText style={{ color: theme.onSecondaryContainer, fontSize: 11, marginLeft: 6, opacity: 0.8, fontWeight: '600' }}>
+                        {takenMedsCount}/{totalMedsCount} taken
+                      </ThemedText>
+                    </View>
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={theme.secondary} />
-                </Card>
+                </LinearGradient>
               </Pressable>
             </Animated.View>
           )}
 
-          {/* Daily Insight / Quote */}
-          <Animated.View entering={FadeInDown.duration(600).delay(450).springify()} style={styles.tipContainer}>
-            <Card variant="filled" style={[styles.tipCard, { backgroundColor: theme.primaryContainer, borderColor: theme.outlineVariant, borderWidth: 1, flexDirection: 'row', alignItems: 'center' }]}>
-              <Ionicons name="book" size={20} color={theme.primary} style={{ marginRight: Spacing.three }} />
-              <View style={{ flex: 1 }}>
-                <ThemedText type="titleSmall" style={{ color: theme.primary, fontWeight: '800', fontSize: 14 }}>Daily Insight</ThemedText>
-                <ThemedText type="bodyMedium" style={{ color: theme.text, marginTop: 2, fontStyle: 'italic', lineHeight: 18, fontSize: 12 }}>"{quote}"</ThemedText>
+          {/* Daily Insight */}
+          <Animated.View entering={FadeInDown.duration(600).delay(450).springify()} style={[styles.section, { marginBottom: Spacing.six }]}>
+            <View style={[styles.insightCard, { backgroundColor: theme.primaryContainer, borderColor: `${theme.primary}30`, borderWidth: 1 }]}>
+              <View style={[styles.insightIcon, { backgroundColor: theme.primary }]}>
+                <Ionicons name="sparkles" size={14} color={theme.onPrimary} />
               </View>
-            </Card>
+              <View style={{ flex: 1, marginLeft: Spacing.three }}>
+                <ThemedText style={{ color: theme.primary, fontWeight: '800', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                  Daily Insight
+                </ThemedText>
+                <ThemedText style={{ color: theme.text, fontStyle: 'italic', lineHeight: 18, fontSize: 13 }}>
+                  "{quote}"
+                </ThemedText>
+              </View>
+            </View>
           </Animated.View>
 
         </SafeAreaView>
       </ScrollView>
 
-      {/* Floating Action Button */}
+      {/* FAB */}
       <Animated.View entering={FadeIn.duration(600).delay(500)} style={styles.fabContainer}>
-        <Pressable style={[styles.fab, { backgroundColor: theme.primary, shadowColor: theme.primary }]} onPress={() => router.push('/log')}>
+        <Pressable
+          style={[styles.fab, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push('/log'); }}
+        >
           <Ionicons name="add" size={28} color={theme.onPrimary} />
         </Pressable>
       </Animated.View>
@@ -329,35 +420,231 @@ export default function HomeScreen() {
   );
 }
 
+const shadowStyle = {
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 3,
+};
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { paddingBottom: BottomTabInset + Spacing.six },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: Spacing.five, paddingTop: Spacing.two, marginBottom: Spacing.three },
-  aiShortcut: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  calendarStrip: { marginBottom: Spacing.four },
-  calendarScroll: { paddingHorizontal: Spacing.five, gap: Spacing.two },
-  calendarDay: { width: 44, height: 60, borderRadius: 20, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  calendarDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: '#fff', position: 'absolute', bottom: 6 },
-  heroContainer: { paddingHorizontal: Spacing.five, marginBottom: Spacing.five, alignItems: 'center' },
-  heroRingCard: { width: width - (Spacing.five * 2), height: 180, borderRadius: 28, justifyContent: 'center', alignItems: 'center', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 6, overflow: 'hidden' },
-  ringInner: { width: 140, height: 140, borderRadius: 70, borderWidth: 6, borderColor: 'rgba(255, 255, 255, 0.35)', backgroundColor: 'rgba(255, 255, 255, 0.08)', justifyContent: 'center', alignItems: 'center', position: 'relative' },
-  ringContent: { alignItems: 'center' },
-  ringLabel: { color: '#fff', fontSize: 9, letterSpacing: 1.5, fontWeight: '900', opacity: 0.9 },
-  ringNumber: { color: '#fff', fontSize: 48, fontWeight: '900', lineHeight: 52 },
-  ringPeriodText: { color: '#fff', fontSize: 12, opacity: 0.9, fontWeight: '700' },
-  ringSubBadge: { position: 'absolute', bottom: -8, paddingHorizontal: Spacing.three, paddingVertical: Spacing.half, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.35)' },
-  sectionContainer: { paddingHorizontal: Spacing.five, marginBottom: Spacing.five },
-  gridContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'space-between' },
-  gridCard: { width: '48%', padding: Spacing.three, borderRadius: 20, position: 'relative', minHeight: 110, justifyContent: 'space-between' },
-  progressBarBg: { width: '100%', height: 4, borderRadius: 2, overflow: 'hidden' },
-  progressBarFill: { height: '100%', borderRadius: 2 },
-  addRingBtn: { position: 'absolute', top: Spacing.three, right: Spacing.three, width: 26, height: 26, borderRadius: 13, justifyContent: 'center', alignItems: 'center' },
-  vitalIconWrap: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', alignSelf: 'flex-start' },
-  medicationCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.three + 2, borderRadius: 24 },
-  tipContainer: { paddingHorizontal: Spacing.five, marginBottom: Spacing.four },
-  tipCard: { flexDirection: 'row', alignItems: 'center', padding: Spacing.four, borderWidth: 1, borderRadius: 20 },
-  fabContainer: { position: 'absolute', right: Spacing.five, bottom: BottomTabInset + 12, zIndex: 100 },
-  fab: { width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 15, elevation: 8 },
+  scrollContent: { paddingBottom: BottomTabInset + 80 },
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four + 4,
+    paddingTop: Spacing.two,
+    paddingBottom: Spacing.three,
+    marginBottom: Spacing.two,
+  },
+  aiBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  heroWrapper: {
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+  },
+  heroCard: {
+    borderRadius: 28,
+    padding: Spacing.four + 4,
+    overflow: 'hidden',
+    minHeight: 190,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  glowOrb: {
+    position: 'absolute',
+    right: -30,
+    top: -30,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  heroContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  heroLeft: {
+    flex: 1,
+    paddingRight: Spacing.three,
+  },
+  phaseBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+  heroTipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: Spacing.two + 2,
+  },
+  heroRingWrap: {
+    alignItems: 'center',
+    position: 'relative',
+  },
+  heroRing: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cycleBadge: {
+    marginTop: 6,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    paddingHorizontal: Spacing.two + 2,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+
+  statsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.two,
+    marginBottom: Spacing.three,
+  },
+  statPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.two + 2,
+    paddingVertical: Spacing.two + 2,
+    borderRadius: 16,
+    gap: 6,
+  },
+  statPillText: {
+    flex: 1,
+  },
+
+  section: {
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.two + 4,
+  },
+
+  progressGrid: {
+    flexDirection: 'row',
+    gap: Spacing.two + 4,
+  },
+  progressCard: {
+    flex: 1,
+    borderRadius: 20,
+    padding: Spacing.three,
+  },
+  progressCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+
+  medBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.three + 4,
+    borderRadius: 20,
+  },
+  medIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  medProgress: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  medDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 4,
+  },
+
+  insightCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: Spacing.three + 4,
+    borderRadius: 20,
+  },
+  insightIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
+
+  fabContainer: {
+    position: 'absolute',
+    right: Spacing.four + 4,
+    bottom: BottomTabInset + 16,
+    zIndex: 100,
+  },
+  fab: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
+  },
 });

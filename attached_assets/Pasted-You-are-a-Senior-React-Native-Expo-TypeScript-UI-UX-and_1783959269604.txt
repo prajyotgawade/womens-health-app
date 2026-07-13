@@ -1,0 +1,483 @@
+You are a Senior React Native (Expo), TypeScript, UI/UX, and Product Engineer.
+
+Your task is NOT to make small UI improvements.
+
+Your task is to transform this application into a premium, production-ready, Play Store quality Women's Health & AI Healthcare application.
+
+Before writing any code, analyze the entire project.
+
+Understand:
+
+Project architecture
+Folder structure
+Navigation
+State management
+Components
+Screens
+APIs
+Supabase integration
+Authentication
+Database
+AI Chat
+Existing features
+Existing business logic
+
+Do NOT assume anything.
+
+IMPORTANT REQUIREMENTS
+DO NOT BREAK ANY EXISTING FEATURES
+
+Keep every existing feature working.
+
+Keep existing backend logic.
+
+Keep Supabase integration.
+
+Keep authentication.
+
+Keep AI functionality.
+
+Keep reports.
+
+Keep calendar logic.
+
+Keep analytics.
+
+Keep reminders.
+
+Keep notifications.
+
+Keep data syncing.
+
+Keep everything functional.
+
+COMPLETE UI/UX REDESIGN
+
+The current application feels unfinished and looks like an MVP.
+
+I am not satisfied with the current UI.
+
+I want a complete redesign.
+
+The application should feel like it was designed by companies such as
+
+Apple
+Google
+Adobe
+Microsoft
+
+and should compete visually with premium healthcare apps like
+
+Flo
+Clue
+Headspace
+Calm
+Notion
+
+Everything should feel premium.
+
+Elegant.
+
+Minimal.
+
+Modern.
+
+Luxurious.
+
+Professional.
+
+Beautiful.
+
+Production Ready.
+
+YOU HAVE COMPLETE DESIGN FREEDOM
+
+You are allowed to redesign
+
+layouts
+navigation
+cards
+components
+dashboards
+onboarding
+profile
+settings
+animations
+typography
+icons
+interactions
+
+You may completely restructure the UI.
+
+You may redesign every screen.
+
+However,
+
+DO NOT remove existing functionality.
+
+DO NOT remove existing features.
+
+Improve the experience while preserving the business logic.
+
+CREATE A DESIGN SYSTEM
+
+First build a proper design system.
+
+Use reusable tokens for
+
+Colors
+Typography
+Spacing
+Border Radius
+Shadows
+Elevation
+Components
+Icons
+Buttons
+Cards
+Inputs
+Dialogs
+Bottom Sheets
+Navigation
+
+Every screen must follow this system.
+
+No inconsistent spacing.
+
+No inconsistent fonts.
+
+No inconsistent component sizes.
+
+COLOR PALETTE
+
+The current pink theme looks outdated.
+
+Replace it completely.
+
+Create a premium healthcare color palette.
+
+Use modern colors.
+
+Improve accessibility.
+
+Improve readability.
+
+Improve contrast.
+
+Only use gradients where appropriate.
+
+The application should feel premium rather than overly pink.
+
+TYPOGRAPHY
+
+Improve every font.
+
+Create proper hierarchy.
+
+Better heading styles.
+
+Better body text.
+
+Better spacing.
+
+Better readability.
+
+Consistent typography across every screen.
+
+HOME DASHBOARD
+
+Redesign the dashboard.
+
+Improve
+
+Hero section
+Greeting
+Cycle overview
+AI insights
+Daily summary
+Health cards
+Quick actions
+Analytics
+Progress cards
+
+The dashboard should immediately impress users.
+
+LOGIN & ONBOARDING
+
+Completely redesign onboarding.
+
+Improve
+
+Google login
+Layout
+Forms
+Progress
+Cards
+Icons
+Empty states
+Animations
+
+Everything should feel premium.
+
+CALENDAR
+
+Redesign the calendar.
+
+Improve
+
+monthly navigation
+day selection
+indicators
+cycle visualization
+statistics
+interactions
+AI CHAT
+
+Current AI chat looks basic.
+
+Redesign it.
+
+Create a premium conversational interface similar to ChatGPT or Gemini.
+
+Improve
+
+message bubbles
+AI avatar
+typing indicator
+suggestion chips
+composer
+scrolling
+loading states
+animations
+PROFILE
+
+Completely redesign Profile.
+
+Improve
+
+Profile header
+User information
+Health summary
+Reports
+Settings
+Preferences
+Cloud Sync
+
+Automatically sync the user's profile photo from Supabase after login.
+
+SETTINGS
+
+Fix every broken setting.
+
+Dark Mode must work.
+
+Light Mode must work.
+
+Language switching must work.
+
+Cloud Sync must work.
+
+Every setting should function correctly.
+
+RESPONSIVENESS
+
+Fix every UI issue.
+
+Nothing should overlap.
+
+Nothing should overflow.
+
+Nothing should be clipped.
+
+Support
+
+small phones
+large phones
+tablets
+portrait
+landscape
+KEYBOARD
+
+Currently the keyboard hides some input fields.
+
+Fix every keyboard issue.
+
+The focused input should always remain visible.
+
+Implement proper KeyboardAvoidingView behavior throughout the app.
+
+NAVIGATION
+
+Redesign Bottom Navigation.
+
+Improve
+
+icons
+spacing
+animations
+active state
+elevation
+
+Move Profile to the LAST tab.
+
+Fix Floating Action Button overlap.
+
+The FAB must never overlap navigation.
+
+COMPONENT QUALITY
+
+Improve every component.
+
+Cards.
+
+Buttons.
+
+Inputs.
+
+Dialogs.
+
+Bottom Sheets.
+
+Loading.
+
+Skeletons.
+
+Empty states.
+
+Error states.
+
+Everything should feel polished.
+
+ANIMATIONS
+
+Implement premium animations.
+
+Smooth screen transitions.
+
+Micro interactions.
+
+Button feedback.
+
+Card animations.
+
+Navigation animations.
+
+Loading animations.
+
+Use performant React Native Reanimated animations where appropriate.
+
+PERFORMANCE
+
+Maintain excellent performance.
+
+Avoid unnecessary re-renders.
+
+Lazy load when appropriate.
+
+Optimize expensive components.
+
+Keep animations smooth.
+
+ACCESSIBILITY
+
+Improve accessibility.
+
+Better contrast.
+
+Readable typography.
+
+Proper touch targets.
+
+Accessible navigation.
+
+FEATURE AUDIT
+
+Audit the entire application.
+
+Find every broken feature.
+
+Fix every bug.
+
+Ensure every screen works correctly.
+
+Ensure every button works.
+
+Ensure every API works.
+
+Ensure every navigation path works.
+
+Ensure every animation works.
+
+Ensure every setting works.
+
+Ensure every form works.
+
+OPTIONAL IMPROVEMENTS
+
+If you identify features commonly expected in premium women's health apps, you may add them if they integrate naturally with the existing product.
+
+Examples:
+
+Better onboarding experience
+Better onboarding progress
+Better AI suggestions
+Mood trends
+Better hydration tracking
+Better analytics
+Rich health reports
+Better reminders
+Achievement badges
+Smart insights
+Better empty states
+Better loading states
+Better search
+Better filtering
+
+Every new feature must be fully functional.
+
+Do NOT create placeholders.
+
+CODE QUALITY
+
+Refactor where needed.
+
+Reduce duplication.
+
+Improve architecture.
+
+Improve component reuse.
+
+Follow React Native and Expo best practices.
+
+Maintain clean, scalable, production-quality code.
+
+EXECUTION PLAN
+
+Before making any changes:
+
+Analyze the entire codebase.
+Produce a redesign plan listing all issues and proposed improvements.
+Wait until the plan is complete.
+Then implement the redesign incrementally.
+After each phase, verify that all existing functionality still works before proceeding.
+FINAL GOAL
+
+The final application should no longer look like an MVP or prototype.
+
+It should feel like a premium, polished, production-ready healthcare application ready for Google Play Store release.
+
+Every screen should have:
+
+consistent spacing
+consistent typography
+premium color palette
+smooth animations
+responsive layouts
+excellent accessibility
+professional UI/UX
+fully working features
+high performance
+scalable architecture
+production-quality code
+
+The finished product should be visually and technically comparable to the best mobile applications on the Play Store.

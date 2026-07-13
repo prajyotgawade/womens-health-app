@@ -162,9 +162,14 @@ export default function CalendarScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + Spacing.two }]}>
-        <ThemedText type="displaySmall" style={{ color: theme.primary, paddingHorizontal: Spacing.five, fontWeight: '900', letterSpacing: -1, fontSize: 26 }}>
-          Calendar
-        </ThemedText>
+        <View style={{ paddingHorizontal: Spacing.five }}>
+          <ThemedText style={{ color: theme.primary, fontWeight: '900', letterSpacing: -1, fontSize: 28 }}>
+            Calendar
+          </ThemedText>
+          <ThemedText style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '500', marginTop: 2 }}>
+            {format(new Date(), 'MMMM yyyy')}
+          </ThemedText>
+        </View>
       </View>
 
       <CalendarProvider

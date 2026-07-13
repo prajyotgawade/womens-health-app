@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Pressable, Switch, Alert, ActivityIndicator, Dimensions, Image } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable, Switch, Alert, ActivityIndicator, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -7,10 +7,11 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
-import { Spacing } from '@/constants/theme';
+import { Spacing, BottomTabInset } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,33 +20,24 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/auth-context';
 import { useAppStore } from '@/store/useAppStore';
 
-const { width } = Dimensions.get('window');
-
 export default function ProfileScreen() {
   const router = useRouter();
   const theme = useTheme();
   const { session } = useAuth();
   const user = session?.user;
-
-  // App Store for global theme state
   const { themeMode, setThemeMode } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [fullName, setFullName] = useState('Aura User');
   const [email, setEmail] = useState('user@aura.com');
   const [avatarEmoji, setAvatarEmoji] = useState('🌸');
-  
-  // Health Summary
   const [heightCm, setHeightCm] = useState(165);
   const [weightKg, setWeightKg] = useState(60);
   const [pregnancyMode, setPregnancyMode] = useState('not_pregnant');
   const [pcos, setPcos] = useState(false);
   const [waterGoal, setWaterGoal] = useState(8);
-
-  // Cycle stats
   const [avgCycle, setAvgCycle] = useState(28);
   const [avgPeriod, setAvgPeriod] = useState(5);
-
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [language, setLanguage] = useState('English');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -57,16 +49,15 @@ export default function ProfileScreen() {
   const fetchProfileData = async () => {
     if (!user) return;
     setLoading(true);
-
     try {
       setEmail(user.email || 'user@aura.com');
-      
+
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
-      
+
       if (profile) {
         setFullName(profile.full_name || 'Aura User');
         setAvatarEmoji(profile.avatar_url || '🌸');
@@ -93,7 +84,7 @@ export default function ProfileScreen() {
         setAvgPeriod(settings.period_length_days || 5);
       }
     } catch (e) {
-      console.warn('Error loading profile page data:', e);
+      console.warn('Error loading profile:', e);
     } finally {
       setLoading(false);
     }
@@ -104,7 +95,7 @@ export default function ProfileScreen() {
     setIsBackingUp(true);
     setTimeout(() => {
       setIsBackingUp(false);
-      Alert.alert('Cloud Sync Complete', 'All cycle charts, medications, and symptoms logs are successfully synced to Supabase.');
+      Alert.alert('Cloud Sync Complete', 'All cycle charts, medications, and symptom logs are successfully synced.');
     }, 1500);
   };
 
@@ -127,14 +118,12 @@ export default function ProfileScreen() {
     if (!user) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsDownloading(true);
-
     try {
       const fetchTable = async (table: string) => {
         try {
           const { data } = await supabase.from(table).select('*').eq('user_id', user.id);
           return data || [];
         } catch (e) {
-          console.warn(`Failed to export table ${table}:`, e);
           return [];
         }
       };
@@ -146,75 +135,39 @@ export default function ProfileScreen() {
       const sleep = await fetchTable('sleep_logs');
       const meds = await fetchTable('medications');
 
-      const exportData = {
-        user: {
-          fullName,
-          email,
-          avatarEmoji,
-          heightCm,
-          weightKg,
-          pregnancyMode,
-          pcos,
-          waterGoal,
-          avgCycle,
-          avgPeriod,
-        },
-        cycles,
-        symptoms,
-        moods,
-        waterLogs: water,
-        sleepLogs: sleep,
-        medications: meds,
-        exportedAt: new Date().toISOString(),
-      };
-
       const html = `
         <html>
           <head>
             <style>
               body { font-family: 'Helvetica Neue', sans-serif; padding: 30px; color: #333; }
-              h1 { color: #B64B74; margin-bottom: 5px; }
-              .header { border-bottom: 2px solid #F3DDE1; padding-bottom: 15px; margin-bottom: 20px; }
+              h1 { color: #6E56CF; margin-bottom: 5px; }
+              .header { border-bottom: 2px solid #E8E4F9; padding-bottom: 15px; margin-bottom: 20px; }
               .section { margin-bottom: 25px; }
-              .section-title { font-size: 18px; font-weight: bold; color: #74565F; border-bottom: 1px solid #F3DDE1; padding-bottom: 5px; margin-bottom: 10px; }
+              .section-title { font-size: 18px; font-weight: bold; color: #6E56CF; border-bottom: 1px solid #E8E4F9; padding-bottom: 5px; margin-bottom: 10px; }
               .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #eee; }
-              .row strong { color: #B64B74; }
+              .row strong { color: #6E56CF; }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1>Aura - Health Export</h1>
+              <h1>Aura — Health Export</h1>
               <div>Generated for ${fullName} (${email})</div>
               <div>Date: ${new Date().toLocaleDateString()}</div>
             </div>
-            
             <div class="section">
-              <div class="section-title">User Biology & Stats</div>
+              <div class="section-title">Body Stats</div>
               <div class="row"><span>Height / Weight</span><strong>${heightCm} cm / ${weightKg} kg</strong></div>
-              <div class="row"><span>PCOS / Pregnancy Mode</span><strong>${pcos ? 'Yes' : 'No'} / ${pregnancyMode}</strong></div>
-              <div class="row"><span>Average Cycle Length</span><strong>${avgCycle} Days</strong></div>
-              <div class="row"><span>Average Period Length</span><strong>${avgPeriod} Days</strong></div>
-              <div class="row"><span>Daily Hydration Goal</span><strong>${waterGoal} Glasses</strong></div>
+              <div class="row"><span>PCOS / Pregnancy</span><strong>${pcos ? 'Yes' : 'No'} / ${pregnancyMode}</strong></div>
+              <div class="row"><span>Avg Cycle / Period</span><strong>${avgCycle}d / ${avgPeriod}d</strong></div>
+              <div class="row"><span>Daily Water Goal</span><strong>${waterGoal} glasses</strong></div>
             </div>
-
             <div class="section">
-              <div class="section-title">Logged Cycles History (${exportData.cycles.length})</div>
-              ${exportData.cycles.map(c => `
-                <div class="row">
-                  <span>Start: ${c.start_date}</span>
-                  <strong>End: ${c.end_date || 'Active'}</strong>
-                </div>
-              `).join('')}
+              <div class="section-title">Cycles (${cycles.length})</div>
+              ${cycles.map((c: any) => `<div class="row"><span>Start: ${c.start_date}</span><strong>End: ${c.end_date || 'Active'}</strong></div>`).join('')}
             </div>
-
             <div class="section">
-              <div class="section-title">Medications List (${exportData.medications.length})</div>
-              ${exportData.medications.map(m => `
-                <div class="row">
-                  <span>${m.name} (${m.dosage})</span>
-                  <strong>${m.frequency}</strong>
-                </div>
-              `).join('')}
+              <div class="section-title">Medications (${meds.length})</div>
+              ${meds.map((m: any) => `<div class="row"><span>${m.name} (${m.dosage})</span><strong>${m.frequency}</strong></div>`).join('')}
             </div>
           </body>
         </html>
@@ -224,7 +177,7 @@ export default function ProfileScreen() {
       await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
     } catch (e) {
       console.error(e);
-      Alert.alert('Export Failed', 'Unable to compile clinical PDF document.');
+      Alert.alert('Export Failed', 'Unable to generate the clinical PDF.');
     } finally {
       setIsDownloading(false);
     }
@@ -234,8 +187,8 @@ export default function ProfileScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     Alert.alert('Log Out', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
-      { 
-        text: 'Log Out', 
+      {
+        text: 'Log Out',
         style: 'destructive',
         onPress: async () => {
           await supabase.auth.signOut();
@@ -249,46 +202,33 @@ export default function ProfileScreen() {
     if (!user) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert(
-      'Purge Health Records', 
-      'This will permanently delete all logged cycles, symptoms, medications, weight, water tracker, and profile configurations. This cannot be undone. Are you absolutely sure?', 
+      'Purge Health Records',
+      'This will permanently delete all logged cycles, symptoms, medications, and profile data. This cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete Permanently', 
+        {
+          text: 'Delete Permanently',
           style: 'destructive',
           onPress: async () => {
             setLoading(true);
             try {
-              // Delete dependencies sequentially to avoid Postgres Foreign Key Race locks
               const clearTables = [
-                'period_logs',
-                'symptoms',
-                'moods',
-                'water_logs',
-                'sleep_logs',
-                'weight_logs',
-                'notes',
-                'medications',
-                'reminders',
-                'ai_history',
-                'notifications',
-                'cycles',
-                'settings',
-                'profiles',
+                'period_logs', 'symptoms', 'moods', 'water_logs', 'sleep_logs',
+                'weight_logs', 'notes', 'medications', 'reminders', 'ai_history',
+                'notifications', 'cycles', 'settings', 'profiles',
               ];
               for (const table of clearTables) {
                 try {
                   const key = (table === 'profiles' || table === 'settings') ? 'id' : 'user_id';
                   await supabase.from(table).delete().eq(key, user.id);
                 } catch (e) {
-                  console.warn(`Error purging table ${table}:`, e);
+                  console.warn(`Error purging ${table}:`, e);
                 }
               }
               await supabase.auth.signOut();
               router.replace('/(auth)/login');
             } catch (err) {
-              console.error(err);
-              Alert.alert('Purge Failed', 'We encountered an error. Please try logging out instead.');
+              Alert.alert('Purge Failed', 'Please try logging out instead.');
             } finally {
               setLoading(false);
             }
@@ -298,20 +238,6 @@ export default function ProfileScreen() {
     );
   };
 
-  const renderSettingRow = (icon: any, title: string, rightContent: React.ReactNode, onPress?: () => void, isDestructive = false, isLast = false) => (
-    <Pressable 
-      onPress={onPress} 
-      disabled={!onPress}
-      style={[styles.settingRow, { borderBottomColor: theme.backgroundElement }, isLast && { borderBottomWidth: 0 }]}
-    >
-      <View style={styles.settingRowLeft}>
-        <Ionicons name={icon} size={20} color={isDestructive ? theme.error : theme.textSecondary} style={{ marginRight: Spacing.three }} />
-        <ThemedText type="bodyMedium" style={{ color: isDestructive ? theme.error : theme.text, fontSize: 14, fontWeight: '500' }}>{title}</ThemedText>
-      </View>
-      <View>{rightContent}</View>
-    </Pressable>
-  );
-
   if (loading) {
     return (
       <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
@@ -320,131 +246,191 @@ export default function ProfileScreen() {
     );
   }
 
+  const STATS = [
+    { label: 'Cycle', value: `${avgCycle}d`, icon: 'refresh-outline', color: theme.primary },
+    { label: 'Period', value: `${avgPeriod}d`, icon: 'water-outline', color: '#E91E63' },
+    { label: 'Weight', value: `${weightKg}kg`, icon: 'scale-outline', color: '#81C784' },
+    { label: 'Water', value: `${waterGoal}/d`, icon: 'water', color: '#4FC3F7' },
+  ];
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          
-          {/* Header Profile (scaled down and neat) */}
-          <Animated.View entering={FadeInDown.duration(400).springify()} style={styles.header}>
-            <View style={[styles.avatarPlaceholder, { backgroundColor: theme.primaryContainer }]}>
-              {avatarEmoji && avatarEmoji.startsWith('http') ? (
-                <Image source={{ uri: avatarEmoji }} style={styles.avatarImage} />
-              ) : (
-                <ThemedText style={{ fontSize: 32 }}>{avatarEmoji || '🌸'}</ThemedText>
-              )}
-            </View>
-            <ThemedText type="titleLarge" style={{ color: theme.text, marginTop: Spacing.three, fontWeight: '800', fontSize: 20 }}>
-              {fullName}
-            </ThemedText>
-            <ThemedText type="labelMedium" style={{ color: theme.textSecondary, fontSize: 12 }}>
-              {email}
-            </ThemedText>
-          </Animated.View>
 
-          {/* Quick Stats Grid */}
-          <Animated.View entering={FadeInDown.duration(400).delay(100).springify()} style={styles.summaryContainer}>
-            <Card variant="elevated" style={styles.summaryCard}>
-              <ThemedText type="labelSmall" style={{ color: theme.textSecondary, textTransform: 'uppercase', marginBottom: Spacing.two, fontWeight: '700', fontSize: 10 }}>
-                Cycle Summary
-              </ThemedText>
-              <View style={styles.summaryGrid}>
-                <View style={styles.summaryGridItem}>
-                  <ThemedText type="titleLarge" style={styles.summaryVal}>{avgCycle}d</ThemedText>
-                  <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontSize: 10 }}>Cycle Avg</ThemedText>
-                </View>
-                <View style={styles.summaryGridItem}>
-                  <ThemedText type="titleLarge" style={styles.summaryVal}>{avgPeriod}d</ThemedText>
-                  <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontSize: 10 }}>Period Avg</ThemedText>
-                </View>
-                <View style={styles.summaryGridItem}>
-                  <ThemedText type="titleLarge" style={styles.summaryVal}>{weightKg}kg</ThemedText>
-                  <ThemedText type="labelSmall" style={{ color: theme.textSecondary, fontSize: 10 }}>Weight</ThemedText>
+          {/* Profile Header */}
+          <Animated.View entering={FadeInDown.duration(500).springify()}>
+            <LinearGradient
+              colors={[theme.primaryContainer, theme.background]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.profileHeader}
+            >
+              <View style={[styles.avatarRing, { borderColor: theme.primary }]}>
+                <View style={[styles.avatarInner, { backgroundColor: theme.primaryContainer }]}>
+                  {avatarEmoji && avatarEmoji.startsWith('http') ? (
+                    <Image source={{ uri: avatarEmoji }} style={styles.avatarImage} />
+                  ) : (
+                    <ThemedText style={{ fontSize: 34 }}>{avatarEmoji || '🌸'}</ThemedText>
+                  )}
                 </View>
               </View>
-            </Card>
+              <ThemedText style={{ color: theme.text, fontWeight: '900', fontSize: 22, marginTop: Spacing.two + 4, letterSpacing: -0.5 }}>
+                {fullName}
+              </ThemedText>
+              <ThemedText style={{ color: theme.textSecondary, fontSize: 13, marginTop: 2, fontWeight: '500' }}>
+                {email}
+              </ThemedText>
+              {pcos && (
+                <View style={[styles.badge, { backgroundColor: `${theme.primary}20`, borderColor: `${theme.primary}40`, borderWidth: 1 }]}>
+                  <ThemedText style={{ color: theme.primary, fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 }}>PCOS Tracker</ThemedText>
+                </View>
+              )}
+            </LinearGradient>
           </Animated.View>
 
-          {/* Achievements Summary */}
-          <Animated.View entering={FadeInDown.duration(400).delay(150).springify()} style={styles.summaryContainer}>
-            <Card variant="filled" style={[styles.reportCard, { backgroundColor: theme.primaryContainer }]}>
-              <View style={styles.achievementRow}>
-                <Ionicons name="trophy" size={26} color={theme.primary} />
-                <View style={{ flex: 1, marginLeft: Spacing.three }}>
-                  <ThemedText type="titleMedium" style={{ color: theme.primary, fontWeight: '700', fontSize: 13 }}>Cycle Champion</ThemedText>
-                  <ThemedText type="labelMedium" style={{ color: theme.primary, opacity: 0.8, fontSize: 11 }}>
-                    Completed 14-day symptom logs streak!
+          {/* Stats Grid */}
+          <Animated.View entering={FadeInDown.duration(500).delay(100).springify()} style={styles.section}>
+            <View style={styles.statsGrid}>
+              {STATS.map((s) => (
+                <View key={s.label} style={[styles.statCard, { backgroundColor: theme.surface }]}>
+                  <View style={[styles.statIcon, { backgroundColor: `${s.color}18` }]}>
+                    <Ionicons name={s.icon as any} size={15} color={s.color} />
+                  </View>
+                  <ThemedText style={{ color: theme.text, fontWeight: '900', fontSize: 18, marginTop: 6 }}>{s.value}</ThemedText>
+                  <ThemedText style={{ color: theme.textSecondary, fontSize: 10, fontWeight: '600', marginTop: 1 }}>{s.label}</ThemedText>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* Achievement Banner */}
+          <Animated.View entering={FadeInDown.duration(500).delay(150).springify()} style={styles.section}>
+            <View style={[styles.achievementCard, { backgroundColor: theme.primaryContainer, borderColor: `${theme.primary}30`, borderWidth: 1 }]}>
+              <View style={[styles.trophyWrap, { backgroundColor: theme.primary }]}>
+                <Ionicons name="trophy" size={18} color={theme.onPrimary} />
+              </View>
+              <View style={{ flex: 1, marginLeft: Spacing.three }}>
+                <ThemedText style={{ color: theme.primary, fontWeight: '800', fontSize: 14 }}>Cycle Champion</ThemedText>
+                <ThemedText style={{ color: theme.primary, opacity: 0.75, fontSize: 12, marginTop: 2 }}>
+                  Completed a 14-day symptom tracking streak!
+                </ThemedText>
+              </View>
+              <Ionicons name="ribbon" size={24} color={theme.primary} style={{ opacity: 0.6 }} />
+            </View>
+          </Animated.View>
+
+          {/* Health Reports */}
+          <Animated.View entering={FadeInDown.duration(500).delay(200).springify()} style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Health Reports</ThemedText>
+            <Pressable onPress={() => router.push('/reports')}>
+              <LinearGradient
+                colors={[theme.primary, theme.tertiary || theme.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.reportsCard}
+              >
+                <View>
+                  <ThemedText style={{ color: '#fff', fontWeight: '900', fontSize: 16 }}>Clinical Reports</ThemedText>
+                  <ThemedText style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 3 }}>
+                    View analytics & export PDF for your physician
                   </ThemedText>
                 </View>
-              </View>
-            </Card>
-          </Animated.View>
-
-          {/* Health Reports Entry */}
-          <Animated.View entering={FadeInDown.duration(400).delay(200).springify()} style={styles.section}>
-            <ThemedText type="titleMedium" style={{ color: theme.text, marginBottom: Spacing.two, fontWeight: '700', fontSize: 14 }}>Health Reports</ThemedText>
-            <Card variant="elevated" style={styles.reportActionCard}>
-              <Ionicons name="analytics" size={36} color={theme.primary} style={{ marginBottom: Spacing.one }} />
-              <ThemedText type="titleMedium" style={{ color: theme.text, fontWeight: '700', fontSize: 14 }}>Clinical Report</ThemedText>
-              <ThemedText type="bodyMedium" style={{ color: theme.textSecondary, marginTop: Spacing.one, marginBottom: Spacing.three, textAlign: 'center', lineHeight: 16, fontSize: 12 }}>
-                Generate a medical cycle summary PDF to print or share with your physician.
-              </ThemedText>
-              <Button label="Open Reports" variant="filled" onPress={() => router.push('/reports')} style={{ width: '100%', height: 44 }} />
-            </Card>
+                <View style={[styles.reportsArrow, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                  <Ionicons name="analytics" size={22} color="#fff" />
+                </View>
+              </LinearGradient>
+            </Pressable>
           </Animated.View>
 
           {/* Preferences */}
-          <Animated.View entering={FadeInDown.duration(400).delay(250).springify()} style={styles.section}>
-             <ThemedText type="titleMedium" style={{ color: theme.text, marginBottom: Spacing.two, fontWeight: '700', fontSize: 14 }}>Preferences & Settings</ThemedText>
-             <Card variant="elevated" style={styles.settingsCard}>
-               {renderSettingRow('sunny', 'Light Theme', 
-                 <Toggle 
-                   value={themeMode === 'light'} 
-                   onValueChange={async (val) => {
-                     const newMode = val ? 'light' : 'dark';
-                     setThemeMode(newMode);
-                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                     if (user) {
-                       try {
-                         await supabase.from('settings').update({ theme: newMode }).eq('id', user.id);
-                       } catch (e) {
-                         console.warn('DB settings theme sync error:', e);
-                       }
-                     }
-                   }} 
-                 />
-               )}
-               {renderSettingRow('language', 'Language', 
-                 <View style={styles.rowRight}>
-                   <ThemedText type="bodyMedium" style={{ color: theme.textSecondary, marginRight: 8, fontSize: 13 }}>{language}</ThemedText>
-                   <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />
-                 </View>,
-                 handleLanguage
-               )}
-             </Card>
+          <Animated.View entering={FadeInDown.duration(500).delay(250).springify()} style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Preferences</ThemedText>
+            <View style={[styles.settingsCard, { backgroundColor: theme.surface }]}>
+              <SettingRow
+                icon="sunny-outline"
+                iconColor="#FFB74D"
+                title="Light Theme"
+                right={
+                  <Toggle
+                    value={themeMode === 'light'}
+                    onValueChange={async (val) => {
+                      const newMode = val ? 'light' : 'dark';
+                      setThemeMode(newMode);
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      if (user) {
+                        try { await supabase.from('settings').update({ theme: newMode }).eq('id', user.id); } catch (e) { }
+                      }
+                    }}
+                  />
+                }
+                theme={theme}
+              />
+              <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
+              <SettingRow
+                icon="language-outline"
+                iconColor="#4FC3F7"
+                title="Language"
+                right={
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <ThemedText style={{ color: theme.textSecondary, fontSize: 13, fontWeight: '600' }}>{language}</ThemedText>
+                    <Ionicons name="chevron-forward" size={15} color={theme.textSecondary} />
+                  </View>
+                }
+                onPress={handleLanguage}
+                theme={theme}
+              />
+            </View>
           </Animated.View>
 
-          {/* Backup & Actions */}
-          <Animated.View entering={FadeInDown.duration(400).delay(300).springify()} style={styles.section}>
-             <ThemedText type="titleMedium" style={{ color: theme.text, marginBottom: Spacing.two, fontWeight: '700', fontSize: 14 }}>Data Management</ThemedText>
-             <Card variant="elevated" style={styles.settingsCard}>
-               {renderSettingRow('cloud-upload-outline', 'Force Cloud Sync', 
-                 isBackingUp ? <ActivityIndicator size="small" color={theme.primary} /> : <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />,
-                 handleBackup
-               )}
-               {renderSettingRow('share-social-outline', 'Download My Clinical Data', 
-                 isDownloading ? <ActivityIndicator size="small" color={theme.primary} /> : <Ionicons name="chevron-forward" size={16} color={theme.textSecondary} />,
-                 downloadMyData
-               )}
-               {renderSettingRow('log-out-outline', 'Log Out', 
-                 <Ionicons name="chevron-forward" size={16} color={theme.error} />,
-                 handleLogOut, true
-               )}
-               {renderSettingRow('trash-outline', 'Purge My Account & Data', 
-                 <Ionicons name="chevron-forward" size={16} color={theme.error} />,
-                 handleDeleteAccount, true, true
-               )}
-             </Card>
+          {/* Data Management */}
+          <Animated.View entering={FadeInDown.duration(500).delay(300).springify()} style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Data Management</ThemedText>
+            <View style={[styles.settingsCard, { backgroundColor: theme.surface }]}>
+              <SettingRow
+                icon="cloud-upload-outline"
+                iconColor="#66BB6A"
+                title="Sync to Cloud"
+                right={isBackingUp ? <ActivityIndicator size="small" color={theme.primary} /> : <Ionicons name="chevron-forward" size={15} color={theme.textSecondary} />}
+                onPress={handleBackup}
+                theme={theme}
+              />
+              <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
+              <SettingRow
+                icon="share-social-outline"
+                iconColor="#AB47BC"
+                title="Download Clinical Data"
+                right={isDownloading ? <ActivityIndicator size="small" color={theme.primary} /> : <Ionicons name="chevron-forward" size={15} color={theme.textSecondary} />}
+                onPress={downloadMyData}
+                theme={theme}
+              />
+              <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
+              <SettingRow
+                icon="log-out-outline"
+                iconColor={theme.error}
+                title="Log Out"
+                right={<Ionicons name="chevron-forward" size={15} color={theme.error} />}
+                onPress={handleLogOut}
+                isDestructive
+                theme={theme}
+              />
+              <View style={[styles.divider, { backgroundColor: theme.backgroundElement }]} />
+              <SettingRow
+                icon="trash-outline"
+                iconColor={theme.error}
+                title="Purge Account & Data"
+                right={<Ionicons name="chevron-forward" size={15} color={theme.error} />}
+                onPress={handleDeleteAccount}
+                isDestructive
+                isLast
+                theme={theme}
+              />
+            </View>
+          </Animated.View>
+
+          <Animated.View entering={FadeInDown.duration(500).delay(350).springify()} style={{ alignItems: 'center', marginBottom: Spacing.six }}>
+            <ThemedText style={{ color: theme.textSecondary, fontSize: 11, fontWeight: '600' }}>Aura • Version 2.0</ThemedText>
+            <ThemedText style={{ color: theme.textSecondary, fontSize: 10, marginTop: 2, opacity: 0.6 }}>Your health data is encrypted & private</ThemedText>
           </Animated.View>
 
         </ScrollView>
@@ -453,93 +439,167 @@ export default function ProfileScreen() {
   );
 }
 
+function SettingRow({ icon, iconColor, title, right, onPress, isDestructive, isLast, theme }: {
+  icon: string; iconColor: string; title: string; right: React.ReactNode;
+  onPress?: () => void; isDestructive?: boolean; isLast?: boolean; theme: any;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      style={styles.settingRow}
+    >
+      <View style={styles.settingLeft}>
+        <View style={[styles.settingIcon, { backgroundColor: `${iconColor}18` }]}>
+          <Ionicons name={icon as any} size={16} color={iconColor} />
+        </View>
+        <ThemedText style={{ color: isDestructive ? theme.error : theme.text, fontSize: 14, fontWeight: '600', marginLeft: Spacing.two + 4 }}>
+          {title}
+        </ThemedText>
+      </View>
+      {right}
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  container: { flex: 1 },
+  loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  safeArea: { flex: 1 },
+  scrollContent: {
+    paddingBottom: BottomTabInset + Spacing.six,
   },
-  loaderContainer: {
-    flex: 1,
+
+  profileHeader: {
+    alignItems: 'center',
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.five,
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.three,
+  },
+  avatarRing: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    borderWidth: 3,
+    padding: 3,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  safeArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: Spacing.four,
-    paddingBottom: BottomTabInset + Spacing.six, // Floating bottom nav offset
-  },
-  header: {
-    alignItems: 'center',
-    marginVertical: Spacing.four,
-  },
-  avatarPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  avatarInner: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
   },
-  summaryContainer: {
-    marginBottom: Spacing.four,
-  },
-  summaryCard: {
-    padding: Spacing.four,
-    borderRadius: 24,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  badge: {
     marginTop: Spacing.two,
-  },
-  summaryGridItem: {
-    alignItems: 'center',
-  },
-  summaryVal: {
-    fontWeight: '800',
-    fontSize: 20,
-  },
-  reportCard: {
-    padding: Spacing.three + 2,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 4,
     borderRadius: 20,
   },
-  achievementRow: {
+
+  section: {
+    paddingHorizontal: Spacing.four,
+    marginBottom: Spacing.three + 4,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: Spacing.two + 4,
+    opacity: 0.6,
+  },
+
+  statsGrid: {
+    flexDirection: 'row',
+    gap: Spacing.two + 2,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 18,
+    padding: Spacing.two + 4,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  achievementCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: Spacing.three + 4,
+    borderRadius: 20,
   },
-  section: {
-    marginBottom: Spacing.four,
-  },
-  reportActionCard: {
-    padding: Spacing.four,
-    borderRadius: 24,
+  trophyWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
+    justifyContent: 'center',
   },
+
+  reportsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.four,
+    borderRadius: 20,
+  },
+  reportsArrow: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
   settingsCard: {
-    borderRadius: 24,
+    borderRadius: 20,
     overflow: 'hidden',
-    padding: Spacing.one,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: Spacing.three,
-    borderBottomWidth: 1,
+    paddingHorizontal: Spacing.three + 4,
+    paddingVertical: Spacing.three,
   },
-  settingRowLeft: {
+  settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  rowRight: {
-    flexDirection: 'row',
+  settingIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  divider: {
+    height: 1,
+    marginHorizontal: Spacing.three + 4,
   },
 });
